@@ -17,6 +17,7 @@ const $=id=>document.getElementById(id);const msg=s=>$('m10status').textContent=
 let auth,db,fs,au,me=null,revision=null;
 let baseline=null, syncTimer=null, syncBusy=false, syncPending=false, syncConflict=false, remoteNotice=null;
 let cloudReady=false;
+ let downloadBusy=false, downloadEpoch=0;
 const autoBox=$('m103auto'), syncInfo=$('m103sync');
 function syncStatus(s){syncInfo.textContent=s;}
 function cancelSync(){clearTimeout(syncTimer);syncTimer=null;syncPending=false;autoBox.checked=false;baseline=null;syncConflict=false;remoteNotice=null;syncStatus('Az automatikus felhőmentés kikapcsolva.');}
@@ -83,23 +84,60 @@ window.misaTeacherCloudState=()=>({uid:me?.uid||null,revision,cloudReady,conflic
 const manifest=()=>fs.doc(db,'tananyag','aktualis');
 function chunks(s,n=95000){const a=[];for(let i=0;i<s.length;i+=n)a.push(s.slice(i,i+n));return a;}
 function valid(p){return p&&Number.isInteger(p.grade)&&Array.isArray(p.subjects)&&p.subjects.every(s=>typeof s.id==='string'&&Array.isArray(s.lessons));}
-async function permitted(user){if(!user)return false;const d=await fs.getDoc(fs.doc(db,'tanarok',user.uid));return d.exists()&&['admin','tanar'].includes(d.data().szerepkor);}
-async function update(user){logoutButton.style.display='none';document.documentElement.classList.remove('misa-teacher-ok');gateMessage(user?'Tanári jogosultság ellenőrzése…':'Jelentkezz be tanári fiókkal.');me=null;revision=null;cloudReady=false;cancelSync();$('m10actions').hidden=true;$('m10login').hidden=false;if(!user){msg('Jelentkezz be tanári fiókkal.');return;}try{if(!await permitted(user)){gateMessage('Ehhez a fiókhoz nincs tanári jogosultság.');msg('A fiók nincs a tanarok gyűjteményben, vagy nincs megfelelő szerepköre.');return;}document.documentElement.classList.add('misa-teacher-ok');logoutButton.style.display='block';gateMessage('Sikeres belépés.');me=user;$('m10actions').hidden=false;$('m10login').hidden=true;const m=await fs.getDoc(manifest());revision=m.exists()?m.data().revision:0;cloudReady=false;msg('Bejelentkezve: '+user.email+' · felhőverzió: '+revision+(m.exists()?' · Automatikus tananyagbetöltés indul…':' · A felhő még üres: a régi, privát Studio-verzióból egyszer fel kell tölteni a tananyagot.'));if(m.exists())await download({automatic:true});}catch(e){gateMessage('Jogosultságellenőrzési hiba: '+e.message);msg('Hozzáférési hiba: '+e.message);}}
-// A privát Safari esetleges végtelen Firestore-várakozását megszakítja.
-// A lejárt kérés nem módosítja a helyi projektet.
-function cloudReadWithTimeout(promise,seconds=15){
- let timer;
- return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('A Firebase nem válaszolt '+seconds+' másodpercen belül. Próbáld újra a felhőbetöltést, vagy használd a normál Safari/Chrome böngészőt.')),seconds*1000);})]).finally(()=>clearTimeout(timer));
-}
-async function download(options={}){if(!me)return;if(syncBusy){msg('Mentés folyamatban. Várd meg a befejezését a betöltés előtt.');return;}try{const m=await cloudReadWithTimeout(fs.getDoc(manifest()));if(!m.exists()){msg('A felhőben még nincs feltöltött tananyag.');return;}const data=m.data();if(!Number.isInteger(data.parts)||data.parts<1||data.parts>200||!data.release)throw Error('Érvénytelen felhőverzió');// Automatikusan csak akkor cserélünk projektet, ha a Studio nem jelez helyi változást.
-// Bizonytalan/mentetlen állapotban a tanár jóváhagyása szükséges.
-const hasLocalChanges=(typeof dirty!=='boolean'||dirty);
-if(!options.automatic||hasLocalChanges){
- const question=options.automatic
-  ?'A Studio helyi módosításokat vagy bizonytalan mentési állapotot jelez. A felhőtananyag betöltése lecseréli a jelenlegi szerkesztést. Előbb készíts JSON-mentést! Betöltöd a felhőverziót?'
-  :'A felhőből betöltött tananyag lecseréli a Studio aktuális szerkesztési állapotát. Előbb készíts JSON-mentést! Folytatod?';
- if(!confirm(question)){if(options.automatic)msg('Automatikus betöltés kihagyva: a helyi projekt változatlan maradt. A felhőtananyagot később kézzel is betöltheted.');return;}
-}msg('Felhőverzió letöltése…');const pieces=[];for(let i=0;i<data.parts;i++){const d=await cloudReadWithTimeout(fs.getDoc(fs.doc(db,'tananyag',data.release+'_p'+i)));if(!d.exists())throw Error('Hiányzó adatrész: '+i);pieces.push(d.data().text);}const incoming=JSON.parse(pieces.join(''));if(!valid(incoming))throw Error('Hibás tananyag');const latest=await cloudReadWithTimeout(fs.getDoc(manifest()));if(!latest.exists()||latest.data().revision!==data.revision||latest.data().release!==data.release){msg('A letöltés alatt új felhőverzió érkezett. A helyi projekt változatlan maradt; kattints ismét a betöltésre.');return;}clearTimeout(syncTimer);autoBox.checked=false;syncPending=false;project=incoming;sid=project.subjects[0]?.id||null;lid=project.subjects[0]?.lessons[0]?.id||null;qidx=0;dirty=true;resetHistory();render();scheduleAutosave();schedulePermanent();revision=data.revision;cloudReady=true;baseline=JSON.stringify(project);syncConflict=false;remoteNotice=null;syncStatus('Felhőprojekt betöltve. Az automatikus mentést külön bekapcsolhatod.');msg('Felhőből betöltve, helyi mentés elindítva. Verzió: '+revision);}catch(e){msg('Letöltési hiba: '+e.message+' A helyi projekt változatlan maradt. Kattints a Felhőben tárolt tananyag betöltése gombra az újrapróbálkozáshoz.');}}
+async function permitted(user){if(!user)return false;const d=await deadlineRead(fs.getDoc(fs.doc(db,'tanarok',user.uid)),Date.now()+15000);return d.exists()&&['admin','tanar'].includes(d.data().szerepkor);}
+async function update(user){downloadEpoch++;logoutButton.style.display='none';document.documentElement.classList.remove('misa-teacher-ok');gateMessage(user?'Tanári jogosultság ellenőrzése…':'Jelentkezz be tanári fiókkal.');me=null;revision=null;cloudReady=false;cancelSync();$('m10actions').hidden=true;$('m10login').hidden=false;if(!user){msg('Jelentkezz be tanári fiókkal.');return;}try{if(!await permitted(user)){gateMessage('Ehhez a fiókhoz nincs tanári jogosultság.');msg('A fiók nincs a tanarok gyűjteményben, vagy nincs megfelelő szerepköre.');return;}document.documentElement.classList.add('misa-teacher-ok');logoutButton.style.display='block';gateMessage('Sikeres belépés.');me=user;$('m10actions').hidden=false;$('m10login').hidden=true;const m=await deadlineRead(fs.getDoc(manifest()),Date.now()+15000);revision=m.exists()?m.data().revision:0;cloudReady=false;msg('Bejelentkezve: '+user.email+' · felhőverzió: '+revision+(m.exists()?' · Automatikus tananyagbetöltés indul…':' · A felhő még üres: a régi, privát Studio-verzióból egyszer fel kell tölteni a tananyagot.'));if(m.exists())await download({automatic:true});}catch(e){gateMessage('Jogosultságellenőrzési hiba: '+e.message);msg('Hozzáférési hiba: '+e.message);}}
+ // One overall deadline, rather than 15 seconds for every individual Firestore document.
+ function deadlineRead(promise,deadline){
+  const remaining=deadline-Date.now();
+  if(remaining<=0)return Promise.reject(Error('A felhőbetöltés túllépte a 30 másodperces időkorlátot.'));
+  let timer;
+  return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('A Firebase nem válaszolt időben (30 másodperc).')),remaining);})]).finally(()=>clearTimeout(timer));
+ }
+ async function download(options={}){
+  if(!me)return;
+  if(downloadBusy){msg('Már folyamatban van egy felhőbetöltés. Várd meg az eredményét.');return;}
+  if(syncBusy){msg('Mentés folyamatban. Várd meg a befejezését a betöltés előtt.');return;}
+  downloadBusy=true;
+  const epoch=++downloadEpoch, userId=me.uid, deadline=Date.now()+30000;
+  const check=()=>{if(epoch!==downloadEpoch||!me||me.uid!==userId)throw Error('A betöltés megszakadt: megváltozott a bejelentkezés.');};
+  try{
+   msg('Felhőverzió ellenőrzése…');
+   const m=await deadlineRead(fs.getDoc(manifest()),deadline);check();
+   if(!m.exists()){msg('A felhőben még nincs feltöltött tananyag.');return;}
+   const data=m.data();
+   if(!Number.isInteger(data.parts)||data.parts<1||data.parts>200||!data.release)throw Error('Érvénytelen felhőverzió');
+   const hasLocalChanges=(typeof dirty!=='boolean'||dirty);
+   if(!options.automatic||hasLocalChanges){
+    const question=options.automatic
+     ?'A Studio helyi módosításokat vagy bizonytalan mentési állapotot jelez. A felhőtananyag betöltése lecseréli a jelenlegi szerkesztést. Előbb készíts JSON-mentést! Betöltöd a felhőverziót?'
+     :'A felhőből betöltött tananyag lecseréli a Studio aktuális szerkesztési állapotát. Előbb készíts JSON-mentést! Folytatod?';
+    if(!confirm(question)){if(options.automatic)msg('Automatikus betöltés kihagyva. A helyi projekt változatlan maradt.');return;}
+   }
+   check();
+   const pieces=[];
+   for(let i=0;i<data.parts;i++){
+    msg('Felhőverzió letöltése… '+(i+1)+'/'+data.parts+' rész');
+    const d=await deadlineRead(fs.getDoc(fs.doc(db,'tananyag',data.release+'_p'+i)),deadline);check();
+    if(!d.exists()||typeof d.data().text!=='string')throw Error('Hiányzó vagy hibás adatrész: '+i);
+    pieces.push(d.data().text);
+   }
+   const incoming=JSON.parse(pieces.join(''));
+   if(!valid(incoming))throw Error('Hibás tananyag');
+   msg('Letöltött tananyag ellenőrzése…');
+   const latest=await deadlineRead(fs.getDoc(manifest()),deadline);check();
+   if(!latest.exists()||latest.data().revision!==data.revision||latest.data().release!==data.release){
+    msg('Közben új felhőverzió érkezett. A helyi projekt változatlan maradt; próbáld újra.');return;
+   }
+   clearTimeout(syncTimer);autoBox.checked=false;syncPending=false;
+   project=incoming;sid=project.subjects[0]?.id||null;lid=project.subjects[0]?.lessons[0]?.id||null;qidx=0;dirty=true;
+   resetHistory();render();scheduleAutosave();schedulePermanent();
+   revision=data.revision;cloudReady=true;baseline=JSON.stringify(project);syncConflict=false;remoteNotice=null;
+   syncStatus('Felhőprojekt betöltve. Az automatikus mentést külön bekapcsolhatod.');
+   msg('Felhőből betöltve, helyi mentés elindítva. Verzió: '+revision);
+  }catch(e){
+   if(epoch===downloadEpoch)msg('Letöltési hiba: '+e.message+' A helyi projekt változatlan maradt. A Betöltés gombbal újrapróbálhatod; privát Safariban ellenőrizd a webhelyadatok engedélyezését is.');
+  }finally{downloadBusy=false;}
+ }
 async function upload(){
  if(!me)return;
  if(syncBusy){msg('Másik felhőmentés már folyamatban van. Várd meg a végét.');return;}
@@ -171,6 +209,7 @@ async function history(){
 $('m10history').onclick=history;
 $('m10signin').onclick=async()=>{try{msg('Bejelentkezés…');await au.signInWithEmailAndPassword(auth,$('m10email').value.trim(),$('m10pass').value);$('m10pass').value='';}catch(e){msg('Bejelentkezési hiba: '+e.message);}};
 async function logout(){
+   downloadEpoch++;
   logoutButton.disabled=true;
   document.documentElement.classList.remove('misa-teacher-ok');
   logoutButton.style.display='none';
@@ -185,6 +224,6 @@ async function logout(){
 }
 logoutButton.onclick=logout;
 $('m10signout').onclick=logout;
-$('m10upload').onclick=upload;$('m10download').onclick=download;
+$('m10upload').onclick=upload;$('m10download').onclick=()=>download({automatic:false});
 (async()=>{try{const base='https://www.gstatic.com/firebasejs/10.14.1/';const [app,authlib,fire]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);au=authlib;fs=fire;const fb=app.initializeApp(config,'misa10-studio');auth=au.getAuth(fb);db=fs.getFirestore(fb);au.onAuthStateChanged(auth,update);}catch(e){gateMessage('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');msg('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');}})();
 })();
