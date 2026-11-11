@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="hu"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Misa Studio 2.9.10 – automatikus projektbetöltés</title><style>
+
+:root{font-family:system-ui,-apple-system,sans-serif;color:#e9f1f6;background:#101923}*{box-sizing:border-box}body{margin:0}header{padding:17px 22px;background:#172737;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:22px;margin:0}small{color:#a8b8c6}button,.btn{border:1px solid #53677a;background:#29445a;color:white;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px}button:hover{background:#37627e}button.primary{background:#137a63;border-color:#209e80}button.danger{background:#663844}input,textarea{width:100%;border:1px solid #50677a;background:#0f1c28;color:white;border-radius:8px;padding:10px;font:inherit}select{width:100%;border:1px solid #50677a;background:#0f1c28;color:white;border-radius:8px;padding:10px;font:inherit}textarea{resize:vertical;min-height:120px;line-height:1.55}label{display:block;margin:14px 0 6px;color:#b9cad7;font-size:13px}main{display:grid;grid-template-columns:245px 300px minmax(300px,1fr);height:calc(100vh - 240px);min-height:500px}.panel{padding:18px;overflow:auto;border-right:1px solid #344657}.panel h2{font-size:16px;margin:0 0 15px}.item{display:block;width:100%;text-align:left;margin:5px 0;background:transparent;border:1px solid transparent}.item.active{background:#235b60;border-color:#418a8e}.tools{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.tools button{padding:7px 10px}.questionlist{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.questionlist button{font-size:12px}.questionlist button.active{background:#235b60;border-color:#418a8e}.questionform{border-top:1px solid #344657;margin-top:16px;padding-top:12px}.muted{color:#a9b9c8;font-size:13px}footer{padding:10px 20px;background:#172737;color:#b6cbd8;font-size:13px;min-height:40px}.headrow{display:flex;align-items:center;justify-content:space-between;gap:8px}@media(max-width:800px){main{grid-template-columns:1fr;height:auto}.panel{border-bottom:1px solid #344657;max-height:none}}
+/* 2.3: elkülönített, interaktív előnézet */
+.image-editor{border:1px solid #50677a;border-radius:9px;padding:12px;margin:14px 0}.image-editor img,.preview-image{max-width:100%;max-height:230px;object-fit:contain;border-radius:6px;margin:10px auto;display:block}.image-editor input[type=file]{padding:7px}.image-editor .muted{line-height:1.5}
+.preview-panel{margin:18px 0;border:2px solid #598a40;border-radius:12px;overflow:hidden;background:#fff0cc;color:#33210e}
+.preview-panel summary{padding:14px;cursor:pointer;font-weight:800;background:#9bdc55;color:#213b12}
+.preview-body{padding:18px;text-align:center}
+.preview-question{font-size:21px;font-weight:800;margin:12px 0 18px;white-space:pre-wrap}
+.preview-option{display:block;width:100%;max-width:520px;margin:8px auto;padding:12px;border:3px solid #6b5a44;border-radius:6px;background:#f8f6ef;color:#292014;font-weight:750;text-align:center}
+.preview-answer-image{display:block;max-width:100%;max-height:150px;object-fit:contain;margin:4px auto 9px;border-radius:6px}.answer-image-row{padding:6px 10px 12px;margin:0 0 8px 24px;border:1px solid #40586b;border-radius:8px}.answer-image-row img{max-height:105px;max-width:160px;display:block;margin:7px 0}.preview-option:disabled{opacity:1;cursor:default}
+.preview-option.correct{background:#a5e67d;border-color:#3d8922}
+.preview-option.wrong{background:#ffc6b8;border-color:#bc5341}
+.preview-feedback{padding:12px;margin-top:14px;border-radius:6px;background:#e8f4d7;font-weight:750;white-space:pre-wrap}
+.preview-input{background:white;color:#261d12;border:2px solid #846037;max-width:440px}
+
+.search-panel{margin:12px 20px;padding:14px;border:1px solid #46657a;border-radius:10px;background:#172737}.search-panel label{margin:0 0 8px}.search-results{max-height:260px;overflow:auto;margin-top:10px}.search-result{width:100%;display:block;text-align:left;margin:5px 0;padding:9px 12px}.search-result small{display:block;margin-top:4px}.search-count{font-size:13px;color:#b9cad7;margin-top:7px}.search-results.compare-expanded{max-height:75vh!important;min-height:500px}.compare-panel{margin:9px 0 14px;border:1px solid #52718a;border-radius:9px;padding:12px;background:#122331}.compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.compare-side{min-width:0;padding:12px;border:1px solid #3b566b;border-radius:8px;overflow-wrap:anywhere}.compare-side strong{display:block;margin-bottom:9px}.compare-line{white-space:pre-wrap;margin:7px 0;font-size:13px}.compare-label{color:#a9c5d8;font-weight:700}.compare-image{max-width:100%;max-height:120px;object-fit:contain;display:block;margin:8px 0}.compare-side button{margin-top:8px}@media(max-width:800px){.compare-grid{grid-template-columns:1fr}}
+
+/* 2.5.8: áttekinthető kérdéslista, rövid szöveges előnézettel. */
+.questionlist.question-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:7px;max-height:270px;overflow-y:auto;overscroll-behavior:contain;padding:5px;border:1px solid #344657;border-radius:9px}
+.question-overview .question-card{display:flex;align-items:flex-start;gap:9px;min-width:0;width:100%;text-align:left;padding:9px 10px;background:#1c3041;border:1px solid #415a70;border-radius:8px;font-size:13px;line-height:1.35}
+.question-overview .question-card[hidden]{display:none}
+.question-overview .question-card:hover{background:#31526a}
+.question-overview .question-card.active{background:#235b60;border-color:#6bc6b7;box-shadow:inset 3px 0 #6bc6b7}
+.question-overview .question-number{flex:0 0 auto;font-weight:800;color:#bde9d6}
+.question-overview .question-snippet{min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+/* 2.5.9: keresés és feladattípus szerinti szűrés a leckén belül. */
+.question-filter-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 5px}
+.question-filter-tools input{flex:2 1 210px;width:auto;min-width:0}
+.question-filter-tools select{flex:1 1 150px;width:auto;min-width:0}
+.question-filter-tools button{flex:0 0 auto}
+.question-filter-count{margin:3px 0 8px}
+
+/* 2.6.0: több kérdés biztonságos kijelölése és kezelése. */
+.bulk-panel{margin:12px 0;padding:12px;border:1px solid #5d8196;border-radius:9px;background:#1a3040}
+.bulk-panel .tools{align-items:center}
+.bulk-panel select{flex:1 1 210px;width:auto}
+.bulk-panel button:disabled{opacity:.45;cursor:not-allowed}
+.question-overview .question-entry{display:flex;align-items:stretch;gap:5px;min-width:0}
+.question-overview .question-entry[hidden]{display:none}
+.question-overview .question-entry .question-card{flex:1;min-width:0}
+.question-overview .bulk-check{flex:0 0 22px;width:22px;height:22px;margin:10px 2px;cursor:pointer;accent-color:#6bc6b7}
+.question-overview .question-entry.selected .question-card{border-color:#d5b76c}
+
+/* 2.6.2 – részletes ellenőrzés */
+.audit-category{font-size:12px;color:#a6d4ee;margin:4px 0}.audit-detail{font-size:12px;color:#b9cad7;margin-top:4px}.audit-result{border-left:3px solid #d3a95c;padding-left:8px;margin:7px 0}.audit-result.error{border-left-color:#e58d93}
+/* 2.6.1 – olvasási célú, tantárgy- és leckeáttekintő */
+.overview-panel{margin:12px 20px;padding:14px;border:1px solid #46657a;border-radius:10px;background:#172737}
+.overview-panel summary{cursor:pointer;font-weight:750}
+.overview-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:14px 0}
+.overview-stat{padding:12px;background:#20394b;border-radius:9px}
+.overview-stat strong{display:block;font-size:23px;color:#bde9d6}
+.overview-subject{border:1px solid #41586a;border-radius:9px;margin:8px 0;padding:9px}
+.overview-subject summary{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.overview-lessons{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;margin-top:9px}
+.overview-lesson{display:block;text-align:left;width:100%;background:#20384b}
+.overview-lesson small{display:block;margin-top:4px}
+.overview-warning{color:#ffd28b}
+/* 2.7.0: strukturált párosítás és sorrend szerkesztés */
+.visual-data-editor{margin:14px 0;padding:14px;border:1px solid #5b8798;border-radius:10px;background:#1a3040}
+.visual-data-row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.visual-data-row input{flex:1 1 160px;width:auto;min-width:90px}
+.visual-data-row button{flex:0 0 auto;padding:7px 10px}
+.visual-data-editor .muted{line-height:1.5}
+.visual-data-warning{color:#ffd28b;white-space:pre-wrap}
+/* 2.7.1 – magyar nyelvű, akadálymentes fájlválasztó */
+.magyar-file{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:8px 0;padding:6px 0}
+.magyar-file input[type=file]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;padding:0!important;border:0!important;pointer-events:none!important}
+.magyar-file button{flex:0 0 auto}
+.magyar-file .magyar-file-name{font-size:13px;color:#b9cad7;overflow-wrap:anywhere}
+
+/* 2.8.0: teljes lecke próba, kizárólag memóriában */
+.lesson-play-overlay{position:fixed;inset:0;background:#07111de8;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.lesson-play-window{width:min(850px,100%);max-height:95vh;overflow:auto;background:#172737;border:2px solid #67ac83;border-radius:14px;padding:20px;color:#edf5f9;box-shadow:0 12px 55px #0009}
+.lesson-play-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.lesson-play-body{background:#fff3d4;color:#2b251b;border-radius:12px;padding:20px;margin:14px 0;text-align:center}
+.lesson-play-body .preview-option{cursor:pointer}.lesson-play-body .preview-option:disabled{cursor:default}
+.lesson-play-body input{background:white;color:#222;max-width:450px;margin:8px auto}
+.lesson-play-body .preview-feedback{margin:12px auto;max-width:600px}
+.lesson-play-progress{color:#b6e4cf;font-size:14px;margin-top:10px}
+.lesson-play-footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.lesson-play-tokens{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+.lesson-play-tokens button{padding:8px 12px}.lesson-play-tokens button.chosen{background:#177b62}
+
+/* 2.9.4: összecsukható ellenőrzőpanelek */
+.collapsible-analysis{padding:0;overflow:hidden}
+.collapsible-analysis>summary{cursor:pointer;font-weight:750;padding:14px 16px;list-style:disclosure-closed;list-style-position:inside}
+.collapsible-analysis[open]>summary{list-style:disclosure-open;border-bottom:1px solid #344657}
+.collapsible-analysis>summary:hover{background:#20394b}
+.collapsible-analysis-body{padding:12px 14px 14px}
+.collapsible-analysis-body .headrow{margin-bottom:6px}
+ .studio-author-credit{padding:18px 12px 26px;text-align:center;font-size:14px;font-weight:650;color:#b8c9d8;letter-spacing:.2px}
+</style><style id="qualityStyles">.quality-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px;margin-top:12px}.quality-card{background:#1c3041;border:1px solid #45677a;border-radius:10px;padding:12px;min-width:0}.quality-card h3{font-size:14px;margin:0 0 5px}.quality-card p{margin:6px 0;font-size:13px}.quality-card ul{margin:8px 0;padding-left:20px;font-size:13px;line-height:1.55}.quality-good{color:#a8e2b4}.quality-warn{color:#ffd28b}.quality-card button{margin-top:8px}.quality-metrics{color:#b9cad7;font-size:12px}</style><style id="misa101-gate-style">html:not(.misa-teacher-ok) body > :not(#misa101-gate):not(script){display:none!important}#misa101-gate{position:fixed;inset:0;z-index:2147483640;background:#101923;color:#e9f1f6;display:flex;align-items:center;justify-content:center;padding:20px;font:16px system-ui}html.misa-teacher-ok #misa101-gate{display:none!important}.misa101-panel{width:min(440px,100%);background:#172737;border:1px solid #55788d;border-radius:16px;padding:26px;box-shadow:0 20px 60px #0008}.misa101-panel h1{font-size:24px}.misa101-panel input{display:block;margin:12px 0;width:100%}.misa101-panel button{width:100%;margin-top:8px}.misa101-panel p{line-height:1.5;color:#c4d4e0}#misa101-status{white-space:pre-wrap}</style></head><body><div id="misa101-gate"><div class="misa101-panel"><h1>🔒 Misa Studio – Tanári belépés</h1><p>Csak tanári jogosultsággal használható a szerkesztő.</p><input id="misa101-email" type="email" autocomplete="username" placeholder="Tanári e-mail"><input id="misa101-password" type="password" autocomplete="current-password" placeholder="Jelszó"><button id="misa101-login">Belépés</button><p id="misa101-status" role="status">Kapcsolódás a Firebase-hez…</p></div></div>
+<header><div><h1>🐈‍⬛ Misa Studio 2.9.10 <small>Vizuális feladatszerkesztő</small></h1><small>Windows és macOS • Studio 0.9.13 JSON-projekt kompatibilitás</small></div><div class="tools"><button id="open">JSON megnyitása</button><button class="primary" id="save">JSON mentése</button><button disabled="" id="undo" title="Visszavonás (⌘Z / Ctrl+Z)">↶ Visszavonás</button><button disabled="" id="redo" title="Újra (⌘⇧Z / Ctrl+Y)">↷ Újra</button><button id="new">Új projekt</button><button id="htmlImport">HTML import</button><button id="htmlBase">Forrás HTML kiválasztása</button><button id="validate">Projekt ellenőrzése</button><button class="primary" id="htmlExport">HTML export</button></div></header><div id="autosaveStatus" role="status" style="padding:5px 22px;color:#a8d9c7;background:#172737;font-size:12px">Automatikus mentés: ellenőrzés…</div><div aria-live="polite" id="studioNotice" role="status" style="display:none;margin:10px 20px;padding:14px;border:1px solid #5c91a9;border-radius:9px;background:#193449;color:#fff;white-space:pre-wrap"></div>
+<section aria-label="Tananyagkereső" class="search-panel"><label for="globalSearch">🔎 Keresés az összes tantárgyban, leckében és kérdésben</label><input autocomplete="off" id="globalSearch" placeholder="Írj be egy szót, kérdést vagy választ…" type="search"/><div class="search-count" id="searchCount">Írj be legalább 2 karaktert.</div><div class="search-results" id="searchResults"></div></section><main><section class="panel"><div class="headrow"><h2>Tantárgyak</h2><button id="addSubject">+ Tantárgy</button></div><div id="subjects"></div></section><section class="panel"><div class="headrow"><h2>Leckék</h2><button id="addLesson">+ Lecke</button></div><div id="lessons"></div></section><section class="panel"><h2>Szerkesztő</h2><div id="editor"><p class="muted">Válassz egy leckét a szerkesztéshez.</p></div></section></main><details class="overview-panel" id="overviewPanel"><summary>📊 Tananyag-áttekintő – tantárgyak, leckék, kérdések</summary><p class="muted">A kimutatás csak olvassa a projektet. A részletes hibákhoz használd a Tananyag ellenőrzése gombot.</p><div class="tools"><button class="primary" id="overviewRefresh" type="button">↻ Áttekintő frissítése</button></div><div id="overviewContent"></div></details><details class="search-panel collapsible-analysis"><summary>🩺 Intelligens tananyagellenőrző</summary><div class="collapsible-analysis-body"><div class="headrow"><div><div class="muted">Hibák és lehetséges ismétlődések. A tananyagot nem módosítja.</div></div><button class="primary" id="auditRun">Tananyag ellenőrzése</button></div><div class="search-count" id="auditSummary">Az ellenőrzés még nem futott le.</div><div class="tools" style="margin:10px 0"><select aria-label="Ellenőrzési eredmény típusa" id="auditSeverity" style="width:auto;max-width:100%"><option value="all">Összes találat</option><option value="hiba">Csak hibák</option><option value="figyelmeztetés">Csak figyelmeztetések</option></select><select aria-label="Hiba kategóriája" id="auditCategory" style="width:auto;max-width:100%"><option value="all">Minden kategória</option></select><select aria-label="Ellenőrzési tantárgy" id="auditSubject" style="width:auto;max-width:100%"><option value="all">Összes tantárgy</option></select></div><div class="search-count" id="auditVisible"></div><div class="search-results" id="auditResults" style="max-height:350px"></div></div></details><details class="search-panel collapsible-analysis"><summary>📚 Tananyagminőség és fejlesztési javaslatok</summary><div class="collapsible-analysis-body"><div class="headrow"><div><div class="muted">Leckék feladatszáma, feladattípusok változatossága, magyarázatok és segítségek. Tájékoztató jellegű, nem módosítja a projektet.</div></div><button class="primary" id="qualityRun" type="button">Minőség elemzése</button></div><div class="search-count" id="qualitySummary">Az elemzés még nem futott le.</div><div class="tools"><select aria-label="Tantárgy szerinti szűrés" id="qualitySubject" style="width:auto;max-width:100%"><option value="all">Összes tantárgy</option></select><select aria-label="Lecke szerinti szűrés" id="qualityLesson" style="width:auto;max-width:100%"><option value="all">Összes lecke</option></select><select aria-label="Fejlesztési javaslatok szűrése" id="qualityFilter" style="width:auto;max-width:100%"><option value="all">Minden lecke</option><option value="needs">Csak fejlesztendők</option></select></div><div class="quality-results" id="qualityResults"></div></div></details><footer id="status">Új, üres tesztprojekt. Az eredeti fájlok nem módosulnak.</footer>
+<div class="studio-author-credit" role="contentinfo">Készítette: Sterbek Zsolt</div><input accept=".json,application/json" hidden="" id="file" type="file"/>
+<input accept=".html,.htm,text/html" hidden="" id="htmlFile" type="file"/><input accept=".html,.htm,text/html" hidden="" id="baseFile" type="file"/>
+<!-- 10.2: a tanári szerkesztő nem tölt nyilvános kérdésbankot -->
+<script>
+
+'use strict';
+
+const names=['Nyelvtan','Irodalom','Etika','Digitális kultúra','Matematika','Környezetismeret','Angol nyelv'];
+
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+
+const fresh=()=>({grade:3,subjects:names.map(name=>({id:uuid(),name,lessons:[]})),sourceFingerprint:null});
+
+let project=fresh(),sid=null,lid=null,dirty=false,qidx=0;
+
+const $=id=>document.getElementById(id);const status=s=>$('status').textContent=s;
+
+const subj=()=>project.subjects.find(x=>x.id===sid);const lesson=()=>subj()?.lessons.find(x=>x.id===lid);
+
+// 2.5.6: A projekt állapotát a módosítás ELŐTTI legutóbbi pillanatképből állítjuk vissza.
+// Az egymást követő gépelési eseményeket egyetlen visszavonási lépésbe vonjuk össze.
+const questionListFilters=new Map();
+const bulkSelections=new Map(); // leckénként kijelölt kérdések sorszámai
+const undoStack=[],redoStack=[];const HISTORY_LIMIT=15;
+let historyBaseline=JSON.stringify(project),historyLastTime=0,historyLastTarget=null;
+function historyControls(){ $('undo').disabled=!undoStack.length; $('redo').disabled=!redoStack.length; }
+function resetHistory(){bulkSelections.clear();undoStack.length=0;redoStack.length=0;historyBaseline=JSON.stringify(project);historyLastTime=0;historyLastTarget=null;historyControls();}
+function mark(){
+  bulkSelections.clear();
+ const now=Date.now(),target=document.activeElement;
+ const typing=target&&['INPUT','TEXTAREA'].includes(target.tagName)&&target.type!=='radio'&&target.type!=='file'&&target.type!=='checkbox';
+ const grouped=typing&&target===historyLastTarget&&now-historyLastTime<900&&undoStack.length>0&&redoStack.length===0;
+ if(!grouped){undoStack.push({data:historyBaseline,sid,lid,qidx,dirty});if(undoStack.length>HISTORY_LIMIT)undoStack.shift();}
+ redoStack.length=0;historyBaseline=JSON.stringify(project);historyLastTime=now;historyLastTarget=typing?target:null;
+  dirty=true;historyControls();scheduleAutosave();schedulePermanent();document.dispatchEvent(new Event('misa-studio-changed'));status('Nem mentett módosítások – kattints a JSON mentése gombra.');
+}
+function restoreHistory(from,to,label){
+ if(!from.length)return;
+ to.push({data:JSON.stringify(project),sid,lid,qidx,dirty});if(to.length>HISTORY_LIMIT)to.shift();
+ const entry=from.pop();project=JSON.parse(entry.data);sid=entry.sid;lid=entry.lid;qidx=entry.qidx;dirty=true;
+ historyBaseline=JSON.stringify(project);historyLastTime=0;historyLastTarget=null;
+  render();historyControls();scheduleAutosave();schedulePermanent();document.dispatchEvent(new Event('misa-studio-changed'));status(label+' – a visszaállított állapotot mentsd JSON-ba.');
+}
+$('undo').onclick=()=>restoreHistory(undoStack,redoStack,'Visszavonva');
+$('redo').onclick=()=>restoreHistory(redoStack,undoStack,'Újraalkalmazva');
+document.addEventListener('keydown',e=>{
+ const modifier=e.metaKey||e.ctrlKey;if(!modifier||e.altKey)return;
+ const key=e.key.toLowerCase();if(key!=='z'&&key!=='y')return;
+ const field=e.target.closest?.('input,textarea,[contenteditable="true"]');
+ // Szövegmezőkben a megszokott natív karakter-visszavonás működik.
+ if(field)return;
+ if(key==='z'&&!e.shiftKey){e.preventDefault();$('undo').click();}
+ else if(key==='y'||key==='z'&&e.shiftKey){e.preventDefault();$('redo').click();}
+});
+
+// 2.5.7: helyi vészmentés; nem írja felül a felhasználó JSON-fájlját.
+const AUTOSAVE_KEY='misa-studio-autosave-v257';
+let autosaveTimer=null,autosaveAvailable=true,autosaveBlocked=false;
+function autosaveLabel(message){const n=$('autosaveStatus');if(n)n.textContent='Automatikus mentés: '+message;}
+function scheduleAutosave(){
+ if(autosaveBlocked||!autosaveAvailable)return;
+ autosaveLabel('módosítás észlelve, mentés hamarosan…');
+ clearTimeout(autosaveTimer);autosaveTimer=setTimeout(writeAutosave,1200);
+}
+function writeAutosave(){
+ clearTimeout(autosaveTimer);autosaveTimer=null;
+ if(autosaveBlocked||!autosaveAvailable||!dirty)return;
+ try{
+  const snapshot={version:1,savedAt:new Date().toISOString(),project,selection:{sid,lid,qidx}};
+  localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(snapshot));
+  autosaveLabel('mentve: '+new Date(snapshot.savedAt).toLocaleString('hu-HU')+' (helyi vészmentés)');
+ }catch(err){autosaveAvailable=false;autosaveLabel('nem sikerült ('+(err?.name==='QuotaExceededError'?'betelt a helyi tárhely':'a helyi tárhely nem elérhető')+'). Használd a JSON mentése gombot!');}
+}
+function discardAutosave(){
+ clearTimeout(autosaveTimer);autosaveTimer=null;
+ try{localStorage.removeItem(AUTOSAVE_KEY)}catch(err){autosaveAvailable=false;autosaveLabel('a helyi mentés nem törölhető; használj JSON-mentést');}
+}
+function inspectAutosave(){
+ let snapshot;
+ try{
+  const raw=localStorage.getItem(AUTOSAVE_KEY);
+  if(!raw){autosaveLabel('készen áll (helyi vészmentés)');return;}
+  snapshot=JSON.parse(raw);
+  const p=snapshot?.project;
+  if(snapshot.version!==1||!p||!Number.isInteger(p.grade)||!Array.isArray(p.subjects)||!p.subjects.every(s=>typeof s.id==='string'&&typeof s.name==='string'&&Array.isArray(s.lessons)&&s.lessons.every(l=>typeof l.id==='string'&&typeof l.title==='string'&&typeof l.content==='string')))throw Error('Érvénytelen mentés');
+ }catch(err){autosaveBlocked=true;autosaveLabel('egy korábbi mentés nem olvasható; nem írom felül');return;}
+ autosaveBlocked=true;
+ autosaveLabel('helyreállítható munka található');
+ const n=$('studioNotice');n.replaceChildren();n.style.display='block';n.style.borderColor='#e7bb66';
+ n.append(el('div','Korábbi automatikus mentés található ('+new Date(snapshot.savedAt).toLocaleString('hu-HU')+'). Visszaállítod a szerkesztést?'));
+ const restore=el('button','↶ Korábbi munka visszaállítása','primary');restore.style.margin='12px 8px 0 0';
+ const skip=el('button','Elvetés és üres projekt');skip.className='danger';skip.style.marginTop='12px';
+ restore.onclick=()=>{
+  project=snapshot.project;sid=snapshot.selection?.sid??null;lid=snapshot.selection?.lid??null;qidx=Number.isInteger(snapshot.selection?.qidx)?snapshot.selection.qidx:0;
+  dirty=true;resetHistory();autosaveBlocked=false;render();schedulePermanent();n.style.display='none';
+  autosaveLabel('helyreállítva: '+new Date(snapshot.savedAt).toLocaleString('hu-HU'));
+  status('Korábbi munka helyreállítva. Mentsd el külön JSON-fájlba is!');
+ };
+ skip.onclick=()=>{discardAutosave();autosaveBlocked=false;n.style.display='none';autosaveLabel('készen áll (helyi vészmentés)');status('Korábbi automatikus mentés elvetve.');};
+ n.append(restore,skip);
+}
+window.addEventListener('pagehide',()=>{if(dirty&&!autosaveBlocked)writeAutosave()});
+window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&dirty&&!autosaveBlocked)writeAutosave()});
+
+function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
+
+// 2.7.1: A natív fájlválasztó angol feliratait saját magyar kezelőfelület váltja fel.
+// Az eredeti input megmarad, így a képek beolvasása és a fájlméret-ellenőrzés változatlan.
+function magyarFileValaszto(input){
+ const wrapper=el('div',undefined,'magyar-file');
+ const button=el('button','Fájl kiválasztása');button.type='button';
+ const filename=el('span','Nincs kiválasztott fájl','magyar-file-name');
+ input.setAttribute('aria-label','Képfájl kiválasztása');
+ button.onclick=()=>input.click();
+ input.addEventListener('change',()=>{
+  const file=input.files?.[0];filename.textContent=file?file.name:'Nincs kiválasztott fájl';
+ });
+ wrapper.append(input,button,filename);
+ return wrapper;
+}
+
+const SEP='\n\n──────────\n\n';
+
+function splitContent(s){return s?s.split(SEP):[]}
+
+function joinContent(parts){return parts.join(SEP)}
+
+function isQuestion(block){return block.split('\n').some(line=>line.startsWith('Kérdés:'))}
+
+function getField(block,key){const line=block.split('\n').find(s=>s.startsWith(key));return line?line.slice(key.length).trimStart():''}
+
+function setField(block,key,value){const lines=block.split('\n');const idx=lines.findIndex(s=>s.startsWith(key));if(idx>=0)lines[idx]=key+' '+value;else lines.push(key+' '+value);return lines.join('\n')}
+
+function render(){refreshQualitySelectors();const subjects=$('subjects'),lessons=$('lessons'),editor=$('editor');subjects.replaceChildren();lessons.replaceChildren();editor.replaceChildren();
+
+project.subjects.forEach(s=>{const b=el('button',s.name,'item'+(sid===s.id?' active':''));b.onclick=()=>{sid=s.id;lid=null;qidx=0;render()};subjects.append(b)});
+
+// 2.5.2: tantárgyak sorrendjének módosítása, a leckék és kérdések érintése nélkül.
+if(subj()){
+ const subjectOrderTools=el('div',undefined,'tools');
+ const moveSubject=(delta)=>{const list=project.subjects;const pos=list.findIndex(x=>x.id===sid),other=pos+delta;if(pos<0||other<0||other>=list.length)return;[list[pos],list[other]]=[list[other],list[pos]];mark();render()};
+ const subjectPos=project.subjects.findIndex(x=>x.id===sid);
+ const subjectUp=el('button','↑ Tantárgy feljebb');subjectUp.disabled=subjectPos<=0;subjectUp.onclick=()=>moveSubject(-1);
+ const subjectDown=el('button','↓ Tantárgy lejjebb');subjectDown.disabled=subjectPos<0||subjectPos===project.subjects.length-1;subjectDown.onclick=()=>moveSubject(1);
+ subjectOrderTools.append(subjectUp,subjectDown);subjects.append(subjectOrderTools);
+}
+
+
+if(subj()){const row=el('div',undefined,'tools');const rename=el('button','Átnevezés');rename.onclick=()=>{const name=prompt('Tantárgy neve:',subj().name);if(name?.trim()){subj().name=name.trim();mark();render()}};const del=el('button','Tantárgy törlése','danger');del.onclick=()=>{if(confirm('Törlöd a tantárgyat és összes leckéjét?')){project.subjects=project.subjects.filter(x=>x.id!==sid);sid=null;lid=null;mark();render()}};row.append(rename,del);subjects.append(row);
+
+subj().lessons.forEach(l=>{const b=el('button',l.title,'item'+(lid===l.id?' active':''));b.onclick=()=>{lid=l.id;qidx=0;render()};lessons.append(b)})
+ const lessonOrderTools=el('div',undefined,'tools');
+ const moveLesson=(delta)=>{const list=subj().lessons;const pos=list.findIndex(x=>x.id===lid);const other=pos+delta;if(pos<0||other<0||other>=list.length)return;[list[pos],list[other]]=[list[other],list[pos]];mark();render()};
+ const lessonUp=el('button','↑ Lecke feljebb');lessonUp.disabled=!lid||subj().lessons.findIndex(x=>x.id===lid)===0;lessonUp.onclick=()=>moveLesson(-1);
+ const lessonDown=el('button','↓ Lecke lejjebb');lessonDown.disabled=!lid||subj().lessons.findIndex(x=>x.id===lid)===subj().lessons.length-1;lessonDown.onclick=()=>moveLesson(1);
+ lessonOrderTools.append(lessonUp,lessonDown);lessons.append(lessonOrderTools);}
+
+if(lesson()){
+
+ const current=lesson();const title=el('input');title.value=current.title;title.setAttribute('aria-label','Lecke címe');
+
+ title.oninput=()=>{current.title=title.value;mark();const b=[...lessons.querySelectorAll('.item')].find(x=>x.classList.contains('active'));if(b)b.textContent=title.value};
+
+ editor.append(el('label','Lecke címe'),title);
+
+ const parts=splitContent(current.content),questionIndices=parts.map((p,i)=>isQuestion(p)?i:-1).filter(i=>i>=0);
+
+ const info=el('p',questionIndices.length+' kérdés ebben a leckében. A változtatásokat JSON-ba vagy HTML-be exportálhatod.','muted');editor.append(info);
+
+ const qtools=el('div',undefined,'tools');
+
+ const typePicker=el('select');typePicker.setAttribute('aria-label','Új kérdés típusa');[['choice','Feleletválasztós'],['fill','Hiányzó szó beírása'],['match','Párosítás'],['order','Sorrendbe rendezés'],['abc','Ábécérend']].forEach(([v,t])=>{const o=el('option',t);o.value=v;typePicker.append(o)});
+ const add=el('button','+ Kérdés hozzáadása','primary');add.onclick=()=>{const p=splitContent(current.content);const id='new-'+uuid(),type=typePicker.value;let block='Azonosító: '+id+'\nTípus: '+type+'\nOldal: \nKérdés: Új kérdés\nVálaszok: Első | Második\nHelyes válasz: Első\nMagyarázat: ';if(type==='fill')block='Azonosító: '+id+'\nTípus: fill\nOldal: \nKérdés: Egészítsd ki!\nHelyes válasz: szó\nMagyarázat: \nSegítség: ';if(type==='match')block='Azonosító: '+id+'\nTípus: match\nOldal: \nKérdés: Párosítsd!\nPárok JSON: [["alma","apple"],["kutya","dog"]]\nMagyarázat: ';if(type==='order'||type==='abc')block='Azonosító: '+id+'\nTípus: '+type+'\nOldal: \nKérdés: Tedd sorrendbe!\nSzavak JSON: ["alma","barack","citrom"]\nMagyarázat: ';p.push(block);current.content=joinContent(p);qidx=p.length-1;mark();render()};
+
+ qtools.append(typePicker,add);editor.append(qtools);
+
+ if(questionIndices.length){
+
+  if(!questionIndices.includes(qidx))qidx=questionIndices[0];
+
+  // A szűrő kizárólag a megjelenített listát módosítja, a tananyagot nem.
+  const filterKey=current.id;
+  const savedFilter=questionListFilters.get(filterKey)||{query:'',type:'all'};
+  const filterTools=el('div',undefined,'question-filter-tools');
+  const filterSearch=el('input');filterSearch.type='search';filterSearch.placeholder='Keresés a lecke kérdéseiben…';
+  filterSearch.setAttribute('aria-label','Kérdések keresése ebben a leckében');filterSearch.value=savedFilter.query;
+  const filterType=el('select');filterType.setAttribute('aria-label','Szűrés feladattípus szerint');
+  [['all','Összes feladattípus'],['choice','Feleletválasztós'],['fill','Hiányzó szó'],['match','Párosítás'],['order','Sorrend'],['abc','Ábécérend'],['legacy-choice','Régi feleletválasztós'],['legacy-type','Régi beírásos'],['other','Egyéb típus']].forEach(([value,label])=>{const o=el('option',label);o.value=value;filterType.append(o)});
+  filterType.value=savedFilter.type;
+  const clearFilter=el('button','Szűrő törlése');clearFilter.type='button';
+  const filterCount=el('div',undefined,'muted question-filter-count');
+  filterTools.append(filterSearch,filterType,clearFilter);
+  editor.append(filterTools,filterCount);
+  const tabs=el('div',undefined,'questionlist question-overview');
+   tabs.setAttribute('aria-label','A lecke kérdései');
+   const questionCards=[];
+   const selection=bulkSelections.get(current.id)||new Set();bulkSelections.set(current.id,selection);
+   for(const index of [...selection])if(!questionIndices.includes(index))selection.delete(index);
+   let updateBulkControls=()=>{};
+   questionIndices.forEach((i,n)=>{
+     const questionText=getField(parts[i],'Kérdés:').replace(/\s+/g,' ').trim()||'(Nincs kérdésszöveg)';
+     const entry=el('div',undefined,'question-entry'+(selection.has(i)?' selected':''));
+     const check=el('input');check.type='checkbox';check.className='bulk-check';check.checked=selection.has(i);
+     check.setAttribute('aria-label',(n+1)+'. kérdés kijelölése');
+     check.onchange=()=>{if(check.checked)selection.add(i);else selection.delete(i);entry.classList.toggle('selected',check.checked);updateBulkControls()};
+     const b=el('button',undefined,'question-card'+(i===qidx?' active':''));
+     b.type='button';b.title=questionText;b.setAttribute('aria-current',i===qidx?'true':'false');
+     b.append(el('span',(n+1)+'.','question-number'),el('span',questionText,'question-snippet'));
+     b.onclick=()=>{qidx=i;render()};entry.append(check,b);tabs.append(entry);
+     questionCards.push({index:i,entry,check,text:searchNormalize(questionText+' '+getField(parts[i],'Azonosító:')+' '+getField(parts[i],'Válaszok:')+' '+getField(parts[i],'Helyes válasz:')),type:getField(parts[i],'Típus:')||'unknown'});
+   });
+   const bulk=el('div',undefined,'bulk-panel');
+   const bulkLabel=el('strong');bulk.append(bulkLabel);
+   const selectRow=el('div',undefined,'tools');
+   const selectVisible=el('button','Láthatók kijelölése');
+   const clearSelection=el('button','Kijelölés törlése');
+   selectRow.append(selectVisible,clearSelection);bulk.append(selectRow);
+   const bulkRow=el('div',undefined,'tools');
+   const bulkTarget=el('select');bulkTarget.setAttribute('aria-label','Tömeges művelet célleckéje');
+   const bulkCopy=el('button','📋 Kijelöltek másolása','primary');
+   const bulkMove=el('button','↪ Kijelöltek áthelyezése');
+   bulkRow.append(bulkTarget,bulkCopy,bulkMove);bulk.append(bulkRow);
+   bulk.append(el('p','A másolatok új azonosítót kapnak. Áthelyezéskor az eredeti azonosítók megmaradnak. A műveletek visszavonhatók.','muted'));
+   editor.append(bulk);
+   const selectedBlocks=()=>[...selection].sort((a,b)=>a-b).map(i=>({index:i,block:splitContent(current.content)[i]})).filter(x=>x.block&&isQuestion(x.block));
+   // A meglévő egyenkénti áthelyezés bankbiztonsági szabályát megtartjuk.
+   const allowedTarget=(target,selected)=>{
+     if(target.id===current.id||!selected.length)return false;
+     const bankOf=block=>/^b(\d+)-i\d+$/.exec(getField(block,'Azonosító:'))?.[1];
+     const destinationBanks=new Set(splitContent(target.content).filter(isQuestion).map(bankOf).filter(x=>x!==undefined));
+     const originBanks=new Set(selected.map(x=>bankOf(x.block)).filter(x=>x!==undefined));
+     if(originBanks.size>1)return false;
+     if(originBanks.size===1&&destinationBanks.size&& (destinationBanks.size!==1||!destinationBanks.has([...originBanks][0])))return false;
+     if(originBanks.size===0&&destinationBanks.size){
+       const sourceBanks=new Set(splitContent(current.content).filter(isQuestion).map(bankOf).filter(x=>x!==undefined));
+       if(sourceBanks.size!==1||destinationBanks.size!==1)return false;
+       if(!destinationBanks.has([...sourceBanks][0]))return false;
+     }
+     return true;
+   };
+   const refreshBulkTargets=()=>{
+     const selected=selectedBlocks(),previous=bulkTarget.value;bulkTarget.replaceChildren();
+     for(const subject of project.subjects)for(const target of subject.lessons){
+       if(!allowedTarget(target,selected))continue;
+       const option=el('option',subject.name+' / '+target.title);option.value=target.id;bulkTarget.append(option);
+     }
+     if([...bulkTarget.options].some(o=>o.value===previous))bulkTarget.value=previous;
+     bulkCopy.disabled=bulkMove.disabled=!selected.length||!bulkTarget.options.length;
+     bulkTarget.disabled=!bulkTarget.options.length;
+   };
+   updateBulkControls=()=>{
+     bulkLabel.textContent=selection.size+' kérdés kijelölve a(z) '+questionIndices.length+' kérdésből';
+     refreshBulkTargets();
+   };
+   selectVisible.onclick=()=>{for(const card of questionCards)if(!card.entry.hidden){selection.add(card.index);card.check.checked=true;card.entry.classList.add('selected')}updateBulkControls()};
+   clearSelection.onclick=()=>{selection.clear();for(const card of questionCards){card.check.checked=false;card.entry.classList.remove('selected')}updateBulkControls()};
+   const runBulk=async mode=>{
+     const chosen=selectedBlocks(),targetId=bulkTarget.value;
+     const target=project.subjects.flatMap(s=>s.lessons).find(l=>l.id===targetId);
+     if(!target||!allowedTarget(target,chosen)){studioMessage('Nincs megfelelő céllecke a kijelölt kérdésekhez.',true);return}
+     if(mode==='move'){
+       const accepted=await studioBulkConfirm(chosen.length+' kérdést áthelyezel a(z) „'+target.title+'” leckébe. Folytatod?');
+       if(!accepted)return;
+     }
+     // Újraellenőrzés a megerősítés után, nehogy közben megváltozott kijelölést kezeljünk.
+     const blocks=splitContent(current.content),indices=chosen.map(x=>x.index);
+     if(indices.some(i=>blocks[i]!==chosen.find(x=>x.index===i)?.block)){studioMessage('A kérdések közben megváltoztak. Jelöld ki őket újra.',true);return}
+     const targetParts=splitContent(target.content);
+     for(const {block} of chosen)targetParts.push(mode==='copy'?setField(block,'Azonosító:','new-'+uuid()):block);
+     target.content=joinContent(targetParts);
+     if(mode==='move')current.content=joinContent(blocks.filter((_,i)=>!selection.has(i)));
+     selection.clear();qidx=0;mark();render();
+     studioMessage(chosen.length+' kérdés '+(mode==='copy'?'átmásolva':'áthelyezve')+' a(z) „'+target.title+'” leckébe. A Visszavonás gombbal visszaállíthatod.');
+   };
+   bulkCopy.onclick=()=>runBulk('copy');bulkMove.onclick=()=>runBulk('move');
+   const applyQuestionFilter=()=>{
+     const query=searchNormalize(filterSearch.value.trim()),type=filterType.value;
+     questionListFilters.set(filterKey,{query:filterSearch.value,type});
+     let visible=0;
+     for(const card of questionCards){const matchesType=type==='all'||(type==='other'?!['choice','fill','match','order','abc','legacy-choice','legacy-type'].includes(card.type):card.type===type);
+       const show=matchesType&&(!query||card.text.includes(query));card.entry.hidden=!show;if(show)visible++;
+     }
+     filterCount.textContent=visible+' / '+questionCards.length+' kérdés látható'+(visible===0?' – nincs találat.':'');
+   };
+   filterSearch.oninput=applyQuestionFilter;
+   filterType.onchange=applyQuestionFilter;
+   clearFilter.onclick=()=>{filterSearch.value='';filterType.value='all';applyQuestionFilter();filterSearch.focus()};
+   applyQuestionFilter();updateBulkControls();
+   editor.append(tabs);
+
+  const moveTools=el('div',undefined,'tools');
+
+  const moveQuestion=(delta)=>{const all=splitContent(current.content);const positions=all.map((p,i)=>isQuestion(p)?i:-1).filter(i=>i>=0);const pos=positions.indexOf(qidx),other=positions[pos+delta];if(other===undefined)return;[all[qidx],all[other]]=[all[other],all[qidx]];current.content=joinContent(all);qidx=other;mark();render()};
+
+  const up=el('button','↑ Kérdés feljebb');up.disabled=questionIndices.indexOf(qidx)===0;up.onclick=()=>moveQuestion(-1);
+
+  const down=el('button','↓ Kérdés lejjebb');down.disabled=questionIndices.indexOf(qidx)===questionIndices.length-1;down.onclick=()=>moveQuestion(1);
+
+  moveTools.append(up,down);editor.append(moveTools);
+
+  const selected=parts[qidx],form=el('div',undefined,'questionform');
+
+  const id=getField(selected,'Azonosító:'),type=getField(selected,'Típus:')||'unknown';
+
+  form.append(el('p','Azonosító: '+id+' · Feladattípus: '+type,'muted'));
+
+  const known=['choice','fill','match','order','abc','legacy-choice','legacy-type'].includes(type);
+
+  const fields=[['Kérdés:','Kérdés szövege'],['Oldal:','Tankönyvi oldal'],['Válaszok:','Válaszlehetőségek ( | jellel elválasztva)'],['Helyes válasz:','Helyes válasz'],['Magyarázat:','Misa tanít – magyarázat'],['Segítség:','Misa tippjei – segítség'],['Párok JSON:','Párok JSON'],['Szavak JSON:','Szavak JSON'],['Forrás:','Forrás']];
+
+  const visible=type==='choice'?['Kérdés:','Oldal:','Magyarázat:']:type==='fill'?['Kérdés:','Oldal:','Helyes válasz:','Magyarázat:','Segítség:']:type==='match'?['Kérdés:','Oldal:','Magyarázat:']:['order','abc'].includes(type)?['Kérdés:','Oldal:','Magyarázat:']:type==='legacy-choice'?['Kérdés:','Magyarázat:','Forrás:']:type==='legacy-type'?['Kérdés:','Helyes válasz:','Magyarázat:','Forrás:']:[];
+
+  if(known){fields.filter(([key])=>visible.includes(key)).forEach(([key,label])=>{form.append(el('label',label));const input=['Magyarázat:','Kérdés:','Segítség:','Párok JSON:','Szavak JSON:'].includes(key)?el('textarea'):el('input');input.value=getField(selected,key);input.style.minHeight=input.tagName==='TEXTAREA'?'70px':'';input.oninput=()=>{const p=splitContent(current.content);p[qidx]=setField(p[qidx],key,input.value);current.content=joinContent(p);mark();const rawEditor=editor.querySelector('details textarea');if(rawEditor)rawEditor.value=current.content};form.append(input)});
+
+
+  // 2.7.0: a játék eredeti JSON-adatszerkezetét megtartó vizuális szerkesztő.
+  if(type==='match'||type==='order'||type==='abc'){
+    const matching=type==='match',key=matching?'Párok JSON:':'Szavak JSON:';
+    const panel=el('div',undefined,'visual-data-editor');
+    panel.append(el('strong',matching?'🔗 Párosítás szerkesztése':type==='abc'?'🔤 Ábécérend szerkesztése':'🔢 Sorrend szerkesztése'));
+    panel.append(el('p',matching?'A két oszlop egy-egy összetartozó pár. A sorokat hozzáadhatod, törölheted és átrendezheted.':'Minden sor egy rendezendő elem. A sorok sorrendje adja a helyes megoldást.','muted'));
+    const warning=el('p',undefined,'visual-data-warning');
+    const rows=el('div');
+    const controls=el('div',undefined,'tools');
+    const addRow=el('button',matching?'+ Új pár':'+ Új elem','primary');
+    const rawDetails=el('details');rawDetails.append(el('summary','Haladó: JSON-adatok megtekintése és javítása'));
+    const rawInput=el('textarea');rawInput.style.minHeight='85px';rawInput.setAttribute('aria-label',key);
+    const applyRaw=el('button','JSON ellenőrzése és alkalmazása');
+    rawDetails.append(rawInput,applyRaw);
+    panel.append(warning,rows,controls,rawDetails);controls.append(addRow);
+    form.append(panel);
+    const read=()=>{
+      const block=splitContent(current.content)[qidx]||'';
+      try{
+        const parsed=JSON.parse(getField(block,key)||'[]');
+        if(!Array.isArray(parsed)||!parsed.every(v=>matching?(Array.isArray(v)&&v.length===2&&v.every(x=>typeof x==='string')):typeof v==='string'))throw Error('A mező formátuma nem megfelelő.');
+        return parsed;
+      }catch(err){return null;}
+    };
+    const write=data=>{
+      const blocks=splitContent(current.content);if(!blocks[qidx])return;
+      blocks[qidx]=setField(blocks[qidx],key,JSON.stringify(data));current.content=joinContent(blocks);
+      mark();const rawEditor=editor.querySelector('details textarea');if(rawEditor)rawEditor.value=current.content;
+      if(preview.open)refreshPreview();
+    };
+    const paint=()=>{
+      const data=read();rows.replaceChildren();
+      rawInput.value=getField(splitContent(current.content)[qidx]||'',key);
+      if(data===null){warning.textContent='⚠️ A jelenlegi JSON-adat hibás vagy nem megfelelő szerkezetű. A tartalmat nem módosítottam. A Haladó mezőben javíthatod.';addRow.disabled=true;return;}
+      addRow.disabled=false;
+      warning.textContent=data.length<2?'⚠️ A játékhoz legalább két '+(matching?'pár':'elem')+' szükséges.':' ';
+      data.forEach((value,i)=>{
+        const line=el('div',undefined,'visual-data-row');
+        const values=matching?value:[value];
+        values.forEach((v,col)=>{
+          const field=el('input');field.value=v;field.placeholder=matching?(col===0?'Bal oldali elem':'Jobb oldali pár'):'Rendezendő elem';
+          field.setAttribute('aria-label',(i+1)+'. sor '+(col+1)+'. mező');
+          // Csak a mező elhagyásakor mentünk, hogy gépelés közben ne épüljön újra a sor.
+          field.onchange=()=>{const next=read();if(!next)return;if(matching)next[i][col]=field.value;else next[i]=field.value;write(next);paint()};
+          line.append(field);
+        });
+        const up=el('button','↑');up.title='Feljebb';up.disabled=i===0;up.onclick=()=>{const next=read();[next[i-1],next[i]]=[next[i],next[i-1]];write(next);paint()};
+        const down=el('button','↓');down.title='Lejjebb';down.disabled=i===data.length-1;down.onclick=()=>{const next=read();[next[i+1],next[i]]=[next[i],next[i+1]];write(next);paint()};
+        const remove=el('button','Törlés','danger');remove.onclick=()=>{const next=read();next.splice(i,1);write(next);paint()};
+        line.append(up,down,remove);rows.append(line);
+      });
+    };
+    addRow.onclick=()=>{const next=read();if(!next)return;next.push(matching?['','']:'');write(next);paint()};
+    applyRaw.onclick=()=>{
+      let parsed;try{parsed=JSON.parse(rawInput.value);if(!Array.isArray(parsed)||!parsed.every(v=>matching?(Array.isArray(v)&&v.length===2&&v.every(x=>typeof x==='string')):typeof v==='string'))throw Error('Hibás szerkezet');}
+      catch{studioMessage('A JSON nem megfelelő. Párosításnál [ ["bal","jobb"], ... ], rendezésnél ["elem", ... ] formátum szükséges.',true);return;}
+      write(parsed);paint();studioMessage('A JSON-adatok alkalmazva.');
+    };
+    paint();
+     if(type==='order'){
+       const altPanel=el('div',undefined,'visual-data-editor');
+       altPanel.append(el('strong','✓ További elfogadható mondatsorrendek'));
+       altPanel.append(el('p','Egy sor = egy másik helyes sorrend. A szavakat pontosan ugyanúgy, szóközzel elválasztva add meg, mint az eredeti feladatban. A játék csak a felsorolt sorrendeket fogadja el.','muted'));
+       const altInput=el('textarea');altInput.rows=4;altInput.placeholder='Példa: A fán énekel a madár.';
+       const altWarning=el('p',undefined,'visual-data-warning');
+       const readAlt=()=>{const raw=getField(splitContent(current.content)[qidx]||'','Elfogadott sorrendek JSON:');if(!raw.trim())return [];try{const v=JSON.parse(raw);return Array.isArray(v)?v:null}catch{return null}};
+       const refreshAlt=()=>{const v=readAlt();altInput.value=v===null?'':v.map(a=>Array.isArray(a)?a.join(' '):String(a)).join('\n');altWarning.textContent=v===null?'⚠️ A meglévő adat hibás. A teljes lecketartalom szerkesztőjében javítható.':''};
+       const saveAlt=el('button','Elfogadott sorrendek mentése','primary');
+       saveAlt.onclick=()=>{
+         const block=splitContent(current.content)[qidx],words=JSON.parse(getField(block,'Szavak JSON:')||'[]');
+         const norm=w=>String(w).normalize('NFC').trim().toLocaleLowerCase('hu').replace(/[.!?]+$/u,'');
+         const sorted=a=>a.map(norm).sort((a,b)=>a.localeCompare(b,'hu')).join('\u0001');
+         const lines=altInput.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+         const variants=lines.map(line=>line.split(/\s+/u));
+         if(variants.some(a=>a.length!==words.length||sorted(a)!==sorted(words))){altWarning.textContent='⚠️ Minden változatnak pontosan az eredeti szavakat kell tartalmaznia, ugyanannyiszor. Ellenőrizd az írásjeleket és az elválasztást.';return}
+         const all=splitContent(current.content);all[qidx]=setField(all[qidx],'Elfogadott sorrendek JSON:',JSON.stringify(variants));current.content=joinContent(all);mark();altWarning.textContent='✓ Mentve a projektbe. A JSON mentése gombbal készíts fájlt is.';
+       };
+       altPanel.append(altInput,saveAlt,altWarning);form.append(altPanel);refreshAlt();
+     }
+  }
+
+
+  if(type==='legacy-type' && /Mondatépítő/i.test(current.title)){
+    const panel=el('div',undefined,'visual-data-editor');
+    panel.append(el('strong','✓ További elfogadható mondatok (régi Mondatépítő)'));
+    panel.append(el('p','Minden sorba egy teljes, helyes mondatot írj. Az eredeti helyes válasz automatikusan megmarad.','muted'));
+    const input=el('textarea');input.rows=5;input.placeholder='Példa: Gyakran esik az eső ősszel.';
+    const warning=el('p',undefined,'visual-data-warning');
+    const raw=getField(splitContent(current.content)[qidx],'Elfogadott válaszok JSON:');
+    try{const data=raw?JSON.parse(raw):[];if(!Array.isArray(data)||!data.every(v=>typeof v==='string'))throw Error();input.value=data.join('\n')}catch{warning.textContent='⚠️ A meglévő alternatív válaszok JSON-adata hibás.'}
+    const save=el('button','Alternatív mondatok mentése','primary');
+    save.onclick=()=>{
+      const block=splitContent(current.content)[qidx];
+      const prompt=getField(block,'Kérdés:');const source=prompt.split(':').slice(1).join(':').trim();
+      const words=source.split(/\s*\/\s*/).map(w=>w.trim()).filter(Boolean);
+      const norm=w=>String(w).normalize('NFC').trim().toLocaleLowerCase('hu').replace(/^[.,!?;:„”"'()]+|[.,!?;:„”"'()]+$/g,'');
+      const sorted=a=>a.map(norm).sort((a,b)=>a.localeCompare(b,'hu')).join('\u0001');
+      const lines=input.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+      if(words.length<2||lines.some(line=>sorted(line.split(/\s+/))!==sorted(words))){warning.textContent='⚠️ Minden mondatnak pontosan a kérdésben szereplő szavakat kell tartalmaznia. Más szót nem fogadunk el.';return}
+      const blocks=splitContent(current.content);blocks[qidx]=setField(blocks[qidx],'Elfogadott válaszok JSON:',JSON.stringify(lines));current.content=joinContent(blocks);mark();warning.textContent='✓ Mentve. Készíts JSON biztonsági mentést is.';if(preview.open)refreshPreview();
+    };
+    panel.append(input,save,warning);form.append(panel);
+  }
+
+  if(type==='choice'||type==='legacy-choice'){
+    const answersBox=el('div');
+    answersBox.append(el('label','Válaszlehetőségek – jelöld ki a helyes választ'));
+    const note=el('p','A válaszok külön szerkeszthetők. Legalább két különböző választ adj meg; a helyeset a körre kattintva jelölheted ki.','muted');
+    answersBox.append(note);
+    const optionsPanel=el('div');answersBox.append(optionsPanel);
+    const getOptions=()=>getField(splitContent(current.content)[qidx],'Válaszok:').split(' | ').map(x=>x.trim()).filter(Boolean);
+    const getAnswer=()=>getField(splitContent(current.content)[qidx],'Helyes válasz:');
+     const getAnswerImages=()=>{try{const v=JSON.parse(getField(splitContent(current.content)[qidx],'Válaszképek JSON:')||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{return {}}};
+     const saveAnswerImages=(images)=>{const all=splitContent(current.content);all[qidx]=setField(all[qidx],'Válaszképek JSON:',JSON.stringify(images));current.content=joinContent(all);mark();const rawEditor=editor.querySelector('details textarea');if(rawEditor)rawEditor.value=current.content;if(preview.open)refreshPreview()};
+
+    const writeOptions=(options,answer)=>{
+      const all=splitContent(current.content);let block=all[qidx];
+      block=setField(block,'Válaszok:',options.join(' | '));
+      block=setField(block,'Helyes válasz:',answer);
+      all[qidx]=block;current.content=joinContent(all);mark();
+      const rawEditor=editor.querySelector('details textarea');if(rawEditor)rawEditor.value=current.content;
+    };
+    const paintOptions=()=>{
+      optionsPanel.replaceChildren();const options=getOptions(),answer=getAnswer();
+      options.forEach((value,i)=>{
+        const line=el('div',undefined,'tools');line.style.alignItems='center';line.style.flexWrap='nowrap';
+        const radio=el('input');radio.type='radio';radio.name='correct-answer-'+id;radio.checked=value===answer;
+        radio.style.width='auto';radio.style.flex='0 0 auto';radio.title='Ez a helyes válasz';
+        radio.onchange=()=>{writeOptions(getOptions(),getOptions()[i]);paintOptions()};
+        const field=el('input');field.value=value;field.setAttribute('aria-label',(i+1)+'. válasz');field.style.minWidth='90px';
+        field.onchange=()=>{
+          const updated=getOptions(),old=updated[i],next=field.value.trim();
+          if(!next||next.includes('|')||updated.some((x,j)=>j!==i&&x===next)){
+            studioMessage('A válasz nem lehet üres, nem tartalmazhat | jelet, és nem egyezhet másik válasszal.',true);field.value=old;return;
+          }
+          updated[i]=next;writeOptions(updated,getAnswer()===old?next:getAnswer());paintOptions();
+        };
+        const removeAnswer=el('button','Törlés');removeAnswer.className='danger';removeAnswer.disabled=options.length<=2;
+        removeAnswer.onclick=()=>{
+          const updated=getOptions(),removed=updated.splice(i,1)[0];
+          const nextAnswer=getAnswer()===removed?updated[0]:getAnswer();writeOptions(updated,nextAnswer);paintOptions();
+        };
+        line.append(radio,field,removeAnswer);optionsPanel.append(line);
+         const imageRow=el('div',undefined,'answer-image-row');
+         const imageLabel=el('label','🖼️ Kép ehhez a válaszhoz (legfeljebb 1 MB)');
+         const imageFile=el('input');imageFile.type='file';imageFile.accept='image/png,image/jpeg,image/webp';
+         const currentImage=getAnswerImages()[value];
+         if(currentImage){const img=el('img');img.src=currentImage;img.alt='Válaszkép: '+value;imageRow.append(img);const clear=el('button','Válaszkép eltávolítása','danger');clear.onclick=()=>{const images=getAnswerImages();delete images[value];saveAnswerImages(images);paintOptions()};imageRow.append(clear)}
+         imageFile.onchange=()=>{const file=imageFile.files?.[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>1024*1024){studioMessage('Legfeljebb 1 MB-os PNG, JPEG vagy WebP kép tölthető fel.',true);imageFile.value='';return}const reader=new FileReader();reader.onload=()=>{const data=String(reader.result||'');if(!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)){studioMessage('Hibás képadat.',true);return}const images=getAnswerImages();images[value]=data;saveAnswerImages(images);paintOptions();studioMessage('A válaszkép hozzáadva. Mentsd a projektet JSON-ba.')};reader.onerror=()=>studioMessage('Nem sikerült beolvasni a képet.',true);reader.readAsDataURL(file)};
+         imageRow.prepend(imageLabel,magyarFileValaszto(imageFile));
+         optionsPanel.append(imageRow);
+      });
+    };
+    const addAnswer=el('button','+ Válasz hozzáadása');addAnswer.onclick=()=>{
+      const options=getOptions();let n=options.length+1,name='Új válasz '+n;
+      while(options.includes(name)){n++;name='Új válasz '+n}
+      options.push(name);writeOptions(options,getAnswer()||options[0]);paintOptions();
+    };
+    answersBox.append(addAnswer);form.append(answersBox);paintOptions();
+  }
+  }else form.append(el('p','Ez a feladattípus egyelőre csak a nyers szerkesztőben módosítható.','muted'));
+
+  // 2.4.1: A képet a JSON-projektbe és a játék exportjába ágyazzuk.
+  const imagePanel=el('div',undefined,'image-editor');
+  imagePanel.append(el('label','🖼️ Kép a kérdéshez'));
+  imagePanel.append(el('p','A kép a JSON-projektben és az exportált játék HTML-fájljában is megjelenik. Legfeljebb 1 MB-os PNG, JPEG vagy WebP képet válassz.','muted'));
+  const imageInput=el('input');imageInput.type='file';imageInput.accept='image/png,image/jpeg,image/webp';
+  const imageView=el('div');
+  const paintImage=()=>{imageView.replaceChildren();const b=splitContent(current.content)[qidx];const data=b?getField(b,'Kép adat:'):'';if(data&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)){const img=el('img');img.src=data;img.alt='A kérdéshez csatolt kép';imageView.append(img);const del=el('button','Kép eltávolítása','danger');del.onclick=()=>{const all=splitContent(current.content);all[qidx]=setField(all[qidx],'Kép adat:','');current.content=joinContent(all);mark();paintImage();if(preview.open)refreshPreview()};imageView.append(del)}else imageView.append(el('p','Ehhez a kérdéshez még nincs kép.','muted'))};
+  imageInput.onchange=()=>{const file=imageInput.files?.[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>1024*1024){studioMessage('Csak PNG, JPEG vagy WebP képet válassz, legfeljebb 1 MB méretben.',true);imageInput.value='';return}const reader=new FileReader();reader.onload=()=>{const data=String(reader.result||'');if(!/^data:image\/(png|jpeg|webp);base64,/.test(data)){studioMessage('A kép beolvasása sikertelen.',true);return}const all=splitContent(current.content);all[qidx]=setField(all[qidx],'Kép adat:',data);current.content=joinContent(all);mark();paintImage();if(preview.open)refreshPreview();studioMessage('Kép hozzáadva. Mentsd el JSON-ként, majd exportáld a játékot HTML-be.')};reader.onerror=()=>studioMessage('Nem sikerült beolvasni a képet.',true);reader.readAsDataURL(file);imageInput.value=''};
+  imagePanel.append(magyarFileValaszto(imageInput),imageView);form.append(imagePanel);
+  paintImage();
+
+  // 2.3: A panel csak a projektben tárolt szöveget jeleníti meg, nem módosítja a tananyagot.
+  const preview=el('details',undefined,'preview-panel');
+  const previewSummary=el('summary','🎮 Játékos előnézet – kattints a megnyitáshoz');
+  const previewBody=el('div',undefined,'preview-body');
+  preview.append(previewSummary,previewBody);
+  const refreshPreview=()=>{
+    if(!preview.open)return;
+    const block=splitContent(current.content)[qidx];if(!block)return;
+    const t=getField(block,'Típus:')||'unknown';
+    const question=getField(block,'Kérdés:');
+    const answer=getField(block,'Helyes válasz:');
+    const explain=getField(block,'Magyarázat:');
+    previewBody.replaceChildren();
+    previewBody.append(el('div',current.title,'muted'));
+    previewBody.append(el('div',question||'Még nincs kérdésszöveg.', 'preview-question'));
+    const questionImage=getField(block,'Kép adat:');if(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(questionImage)){const img=el('img');img.src=questionImage;img.alt='Kérdés képe';img.className='preview-image';previewBody.append(img)}
+    const feedback=el('div',undefined,'preview-feedback');feedback.style.display='none';
+    const respond=(correct)=>{feedback.style.display='block';feedback.textContent=(correct?'✓ Helyes válasz!':'✗ Próbáld újra!')+(explain?'\nMisa tanít: '+explain:'');};
+    if(t==='choice'||t==='legacy-choice'){
+      const opts=getField(block,'Válaszok:').split(' | ').map(x=>x.trim()).filter(Boolean);
+       let optionImages={};try{optionImages=JSON.parse(getField(block,'Válaszképek JSON:')||'{}')}catch{};
+       opts.forEach(value=>{const b=el('button',undefined,'preview-option');const pic=optionImages?.[value];if(typeof pic==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(pic)){const img=el('img');img.src=pic;img.alt=value;img.className='preview-answer-image';b.append(img)}b.append(el('span',value));b.onclick=()=>{b.classList.add(value===answer?'correct':'wrong');respond(value===answer)};previewBody.append(b)});
+      if(!opts.length)previewBody.append(el('p','Még nincsenek válaszlehetőségek.','muted'));
+    }else if(t==='fill'||t==='legacy-type'){
+      const field=el('input');field.className='preview-input';field.placeholder='Írd be a választ…';
+      const check=el('button','Ellenőrzés');check.onclick=()=>respond(acceptedLegacyAnswer(field.value,block));
+      field.onkeydown=e=>{if(e.key==='Enter')check.click()};previewBody.append(field,check);
+    }else if(t==='match'){
+      try{const pairs=JSON.parse(getField(block,'Párok JSON:'));previewBody.append(el('p','Párosítandó elemek:','muted'));pairs.forEach(pair=>previewBody.append(el('div',Array.isArray(pair)?pair.join(' ↔ '):String(pair))))}catch(e){previewBody.append(el('p','Hibás párok JSON.','muted'))}
+      previewBody.append(el('p','A párosítás itt tartalmi előnézet; a teljes játéklogika a HTML-exportban próbálható ki.','muted'));
+    }else if(t==='order'||t==='abc'){
+      try{const words=JSON.parse(getField(block,'Szavak JSON:'));previewBody.append(el('p',Array.isArray(words)?words.join('  •  '):'Érvénytelen szavak','preview-question'))}catch(e){previewBody.append(el('p','Hibás szavak JSON.','muted'))}
+      previewBody.append(el('p','A rendezés itt tartalmi előnézet; a teljes játéklogika a HTML-exportban próbálható ki.','muted'));
+    }else previewBody.append(el('p','Ehhez a feladattípushoz még nincs interaktív előnézet.','muted'));
+    previewBody.append(feedback);
+    const reset=el('button','↻ Újrakezdés');reset.onclick=refreshPreview;previewBody.append(reset);
+  };
+  preview.addEventListener('toggle',()=>{if(preview.open)refreshPreview()});
+  form.append(preview);
+  // A szerkesztőmezők változásakor a nyitott előnézet frissül.
+  form.addEventListener('input',()=>{if(preview.open)refreshPreview()});
+  form.addEventListener('change',()=>{if(preview.open)refreshPreview()});
+
+  const action=el('div',undefined,'tools');const copy=el('button','Kérdés másolása');copy.onclick=()=>{const p=splitContent(current.content);let clone=setField(p[qidx],'Azonosító:','new-'+uuid());p.splice(qidx+1,0,clone);current.content=joinContent(p);qidx++;mark();render()};const remove=el('button','Kérdés törlése','danger');remove.onclick=async()=>{
+    const targetId=getField(splitContent(current.content)[qidx]||'','Azonosító:');
+    const targetQuestion=getField(splitContent(current.content)[qidx]||'','Kérdés:');
+    if(!targetId){studioMessage('A törlés megszakadt: a kérdés azonosítója hiányzik.',true);return;}
+    const accepted=await studioDeleteConfirm('Biztosan törlöd ezt a kérdést?\n\n'+targetQuestion+'\nAzonosító: '+targetId);
+    if(!accepted)return;
+    const p=splitContent(current.content);
+    const matches=p.map((block,index)=>isQuestion(block)&&getField(block,'Azonosító:')===targetId?index:-1).filter(index=>index>=0);
+    if(matches.length!==1){studioMessage('A törlés megszakadt: a kérdés már nem található egyértelműen. ('+matches.length+' találat)',true);return;}
+    p.splice(matches[0],1);
+    current.content=joinContent(p);qidx=0;mark();render();
+    studioMessage('A kérdés törölve: '+targetId+'. A módosítás megőrzéséhez mentsd a projektet JSON-ba.');
+  };const moveRow=el('div',undefined,'tools');const moveSelect=el('select');moveSelect.setAttribute('aria-label','Céllecke');const originBank=/^b(\d+)-i\d+$/.exec(id)?.[1];const candidates=[];for(const subject of project.subjects)for(const target of subject.lessons){if(target.id===current.id)continue;const ids=splitContent(target.content).filter(isQuestion).map(b=>getField(b,'Azonosító:'));const banks=new Set(ids.map(x=>/^b(\d+)-i\d+$/.exec(x)?.[1]).filter(x=>x!==undefined));if(originBank!==undefined&&banks.size&&(!banks.has(originBank)||banks.size>1))continue;if(originBank===undefined&&banks.size){const sourceBanks=new Set(splitContent(current.content).filter(isQuestion).map(b=>/^b(\d+)-i\d+$/.exec(getField(b,'Azonosító:'))?.[1]).filter(x=>x!==undefined));if(sourceBanks.size&&(!banks.has([...sourceBanks][0])||sourceBanks.size>1))continue;}candidates.push({subject,target});const o=el('option',subject.name+' / '+target.title);o.value=target.id;moveSelect.append(o)}
+ const move=el('button','Kérdés áthelyezése');move.disabled=!candidates.length;move.onclick=()=>{const target=candidates.find(x=>x.target.id===moveSelect.value)?.target;if(!target)return;const original=splitContent(current.content),block=original[qidx];if(!block)return;const destination=splitContent(target.content);destination.push(block);original.splice(qidx,1);target.content=joinContent(destination);current.content=joinContent(original);qidx=0;mark();render();studioMessage('Kérdés áthelyezve: '+target.title+' – ellenőrizd a projektet és a HTML-exportot.');};moveRow.append(moveSelect,move);form.append(moveRow);
+ action.append(copy,remove);form.append(action);editor.append(form);
+
+ }
+
+ const playLesson=el('button','🎮 Teljes lecke kipróbálása','primary');playLesson.type='button';playLesson.disabled=!splitContent(current.content).some(isQuestion);playLesson.onclick=()=>openLessonPreview(current);editor.append(playLesson);
+
+ const rawTitle=el('details');const summary=el('summary','Haladó: teljes lecketartalom szerkesztése');rawTitle.append(summary);const raw=el('textarea');raw.value=current.content;raw.style.minHeight='210px';raw.oninput=()=>{current.content=raw.value;mark();info.textContent='A nyers szöveg módosult. A kérdések frissítéséhez válts leckét, majd vissza.'};rawTitle.append(raw);editor.append(rawTitle);
+
+  // 2.5.1: teljes lecke biztonságos másolása, minden kérdés új azonosítóval.
+  // A másolat ugyanabban a tantárgyban marad, mert a játék BANKS kérdésbankjai
+  // nem feltétlenül követik a Studio tantárgybesorolását.
+  const duplicate=el('button','📋 Lecke másolása','primary');
+  duplicate.onclick=()=>{
+   const source=lesson(),owner=subj();if(!source||!owner)return;
+   const baseTitle=source.title+' (másolat)';
+   let suggested=baseTitle,n=2;
+   while(owner.lessons.some(l=>l.title===suggested))suggested=baseTitle+' '+n++;
+   const proposed=prompt('Az új lecke neve:',suggested);
+   if(proposed===null)return;
+   const newTitle=proposed.trim();
+   if(!newTitle){studioMessage('A másolat neve nem lehet üres.',true);return;}
+   if(owner.lessons.some(l=>l.title===newTitle)){studioMessage('Már van ilyen című lecke ebben a tantárgyban.',true);return;}
+   const blocks=splitContent(source.content).map(block=>{
+    if(!isQuestion(block))return block;
+    return setField(block,'Azonosító:','new-'+uuid());
+   });
+   const clone={id:uuid(),title:newTitle,content:joinContent(blocks)};
+   const at=owner.lessons.findIndex(l=>l.id===source.id);
+   owner.lessons.splice(at+1,0,clone);
+   lid=clone.id;qidx=0;mark();render();
+   studioMessage('A lecke másolata elkészült ('+blocks.filter(isQuestion).length+' kérdés). Mentsd JSON-ba, majd ellenőrizd a HTML-exportot.');
+  };
+ const row=el('div',undefined,'tools');const del=el('button','Lecke törlése','danger');del.onclick=()=>{if(confirm('Biztosan törlöd ezt a leckét?')){subj().lessons=subj().lessons.filter(x=>x.id!==lid);lid=null;mark();render()}};row.append(duplicate,del);editor.append(row)
+
+ }else editor.append(el('p','Válassz egy leckét a szerkesztéshez.','muted'));
+
+}
+
+
+// 2.8.0: a próba nem írja a projektet, az automatikus mentést vagy a tanulói eredményeket.
+function openLessonPreview(sourceLesson){
+ const questions=splitContent(sourceLesson.content).filter(isQuestion);
+ if(!questions.length){studioMessage('Ebben a leckében nincs kipróbálható kérdés.',true);return;}
+ const overlay=el('div',undefined,'lesson-play-overlay');overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Tananyagminőség és fejlesztési javaslatok');
+ const windowBox=el('div',undefined,'lesson-play-window');overlay.append(windowBox);
+ const head=el('div',undefined,'lesson-play-head');const heading=el('strong','🎮 '+sourceLesson.title);const close=el('button','✕ Bezárás');head.append(heading,close);
+ const progress=el('div',undefined,'lesson-play-progress'),body=el('div',undefined,'lesson-play-body'),footer=el('div',undefined,'lesson-play-footer');
+ windowBox.append(head,progress,body,footer);document.body.append(overlay);
+ const oldFocus=document.activeElement;let position=0;const results=Array(questions.length).fill(null);
+ const dismiss=()=>{document.removeEventListener('keydown',escapeHandler);overlay.remove();oldFocus?.focus?.()};
+ const escapeHandler=e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}};document.addEventListener('keydown',escapeHandler);close.onclick=dismiss;close.focus();
+ const normalize=s=>String(s??'').trim().toLocaleLowerCase('hu');
+ const btn=(label,action,klass)=>{const b=el('button',label,klass);b.type='button';b.onclick=action;return b};
+ const makeFeedback=(correct,block)=>{const fb=el('div',(correct?'✓ Helyes válasz!':'✗ Nem megfelelő válasz.')+(getField(block,'Magyarázat:')?'\nMisa tanít: '+getField(block,'Magyarázat:'):''),'preview-feedback');fb.style.whiteSpace='pre-wrap';return fb};
+ const renderPlay=()=>{
+  body.replaceChildren();footer.replaceChildren();
+  if(position>=questions.length){
+   const correct=results.filter(v=>v===true).length,wrong=results.filter(v=>v===false).length,skipped=results.filter(v=>v===null).length;
+   progress.textContent='A lecke próbája befejeződött';body.append(el('h2','🏁 Lecke vége'),el('p','Helyes: '+correct+' / '+questions.length+' · Hibás: '+wrong+' · Kihagyott: '+skipped));
+   body.append(el('p','Ez csak próba: a tananyag és a tanulói eredmények nem változtak.'));
+   footer.append(btn('↻ Újrakezdés',()=>{results.fill(null);position=0;renderPlay()},'primary'),btn('Bezárás',dismiss));return;
+  }
+  const block=questions[position],type=getField(block,'Típus:')||'unknown';let answered=false;
+  progress.textContent=(position+1)+' / '+questions.length+' kérdés · '+results.filter(v=>v===true).length+' helyes válasz';
+  body.append(el('div',getField(block,'Típus:')||'Feladat','muted'),el('div',getField(block,'Kérdés:')||'(Hiányzó kérdésszöveg)','preview-question'));
+  const imageData=getField(block,'Kép adat:');if(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(imageData)){const pic=el('img');pic.src=imageData;pic.alt='A kérdés képe';pic.className='preview-image';body.append(pic)}
+  const feedbackHost=el('div');body.append(feedbackHost);
+  const record=correct=>{if(answered)return;answered=true;results[position]=correct;feedbackHost.replaceChildren(makeFeedback(correct,block));progress.textContent=(position+1)+' / '+questions.length+' kérdés · '+results.filter(v=>v===true).length+' helyes válasz';};
+  if(type==='choice'||type==='legacy-choice'){
+   const options=getField(block,'Válaszok:').split(' | ').map(x=>x.trim()).filter(Boolean),answer=getField(block,'Helyes válasz:');
+   let images={};try{images=JSON.parse(getField(block,'Válaszképek JSON:')||'{}')}catch{}
+   if(!options.length)body.append(el('p','Nincsenek válaszlehetőségek.'));
+   for(const option of options){const b=el('button',undefined,'preview-option');b.type='button';const imgData=images?.[option];if(typeof imgData==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(imgData)){const img=el('img');img.src=imgData;img.alt=option;img.className='preview-answer-image';b.append(img)}b.append(el('span',option));b.onclick=()=>{if(answered)return;const correct=normalize(option)===normalize(answer);record(correct);b.classList.add(correct?'correct':'wrong');body.querySelectorAll('.preview-option').forEach(x=>x.disabled=true)};body.insertBefore(b,feedbackHost)}
+  }else if(type==='fill'||type==='legacy-type'){
+   const input=el('input');input.placeholder='Írd be a választ…';const check=btn('✓ Ellenőrzés',()=>{if(answered)return;record(acceptedLegacyAnswer(input.value,block));input.disabled=true;check.disabled=true},'primary');input.onkeydown=e=>{if(e.key==='Enter')check.click()};body.insertBefore(input,feedbackHost);body.insertBefore(check,feedbackHost);
+  }else if(type==='order'||type==='abc'){
+   try{const words=JSON.parse(getField(block,'Szavak JSON:'));if(!Array.isArray(words)||words.length<2||!words.every(x=>typeof x==='string'))throw Error();
+    const selected=[],tokens=el('div',undefined,'lesson-play-tokens');const instruction=el('p','Kattints az elemekre a helyes sorrendben.');body.insertBefore(instruction,feedbackHost);body.insertBefore(tokens,feedbackHost);
+    const shuffled=words.map((value,i)=>({value,i}));for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]}
+    const chosen=el('p','Kiválasztott sorrend: –');body.insertBefore(chosen,feedbackHost);
+    for(const item of shuffled){const b=btn(item.value,()=>{if(answered||b.disabled)return;selected.push(item.i);b.disabled=true;b.classList.add('chosen');chosen.textContent='Kiválasztott sorrend: '+selected.map(i=>words[i]).join(' → ');if(selected.length===words.length)record(selected.every((index,i)=>index===i))});tokens.append(b)}
+    const clear=btn('↶ Sorrend újrakezdése',()=>{if(answered)return;selected.length=0;chosen.textContent='Kiválasztott sorrend: –';tokens.querySelectorAll('button').forEach(b=>{b.disabled=false;b.classList.remove('chosen')})});body.insertBefore(clear,feedbackHost);
+   }catch{body.insertBefore(el('p','A sorrend adatai hibásak; ezt a kérdést kihagyhatod.'),feedbackHost)}
+  }else if(type==='match'){
+   try{const pairs=JSON.parse(getField(block,'Párok JSON:'));if(!Array.isArray(pairs)||pairs.length<2||!pairs.every(p=>Array.isArray(p)&&p.length===2))throw Error();
+    body.insertBefore(el('p','Válaszd ki minden bal oldali elem párját!'),feedbackHost);const selects=[];const right=pairs.map((p,i)=>({label:String(p[1]),index:i}));for(let i=right.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[right[i],right[j]]=[right[j],right[i]]}
+    for(let i=0;i<pairs.length;i++){const row=el('div',undefined,'visual-data-row');row.style.justifyContent='center';row.append(el('strong',String(pairs[i][0])));const select=el('select');select.style.width='auto';const blank=el('option','Válassz párt…');blank.value='';select.append(blank);right.forEach(item=>{const o=el('option',item.label);o.value=String(item.index);select.append(o)});row.append(select);body.insertBefore(row,feedbackHost);selects.push(select)}
+    const check=btn('✓ Párok ellenőrzése',()=>{if(answered||selects.some(s=>s.value===''))return;record(selects.every((s,i)=>Number(s.value)===i));selects.forEach(s=>s.disabled=true);check.disabled=true},'primary');body.insertBefore(check,feedbackHost);
+   }catch{body.insertBefore(el('p','A párosítás adatai hibásak; ezt a kérdést kihagyhatod.'),feedbackHost)}
+  }else body.insertBefore(el('p','Ehhez a feladattípushoz még nincs teljes játékos ellenőrzés; a kérdés kihagyható.'),feedbackHost);
+  const back=btn('← Előző',()=>{position--;renderPlay()});back.disabled=position===0;
+  const next=btn(position===questions.length-1?'Eredmények →':'Következő →',()=>{position++;renderPlay()},'primary');
+  footer.append(back,btn('Kihagyás',()=>{results[position]=null;position++;renderPlay()}),next);
+ };
+ renderPlay();
+}
+
+// 2.5.0: projekt-szintű keresés, a projektadatok módosítása nélkül.
+function searchNormalize(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('hu')}
+function searchSnippet(value,needle){const source=String(value??'').replace(/\s+/g,' ').trim();const at=searchNormalize(source).indexOf(needle);if(at<0)return source.slice(0,105);const from=Math.max(0,at-35);return (from?'…':'')+source.slice(from,from+115)+(from+115<source.length?'…':'')}
+function updateGlobalSearch(){
+ const query=$('globalSearch').value.trim(),normalized=searchNormalize(query),results=$('searchResults'),count=$('searchCount');results.replaceChildren();
+ if(normalized.length<2){count.textContent='Írj be legalább 2 karaktert.';return}
+ const hits=[];
+ for(const s of project.subjects){
+  for(const l of s.lessons){
+   const blocks=splitContent(l.content);
+   if(searchNormalize(s.name+' '+l.title).includes(normalized))hits.push({s,l,index:null,description:'Lecke: '+l.title});
+   for(let i=0;i<blocks.length;i++){
+    if(!isQuestion(blocks[i]))continue;
+    const block=blocks[i];
+    // Képek base64 tartalmában nem keresünk: csak a szöveges mezőkben.
+    const lines=block.split('\n').filter(line=>!line.startsWith('Kép adat:')&&!line.startsWith('Válaszképek JSON:'));
+    const matched=lines.find(line=>searchNormalize(line).includes(normalized));
+    if(matched)hits.push({s,l,index:i,description:searchSnippet(matched,normalized)});
+   }
+  }
+ }
+ count.textContent=hits.length+' találat'+(hits.length>100?' – az első 100 jelenik meg':'')+'.';
+ for(const hit of hits.slice(0,100)){
+  const b=el('button',hit.index===null?'📚 '+hit.l.title:'❓ '+getField(splitContent(hit.l.content)[hit.index],'Kérdés:'),'search-result');
+  const detail=el('small',hit.s.name+' / '+hit.l.title+' · '+hit.description);b.append(detail);
+  b.onclick=()=>{sid=hit.s.id;lid=hit.l.id;qidx=hit.index===null?0:hit.index;render();const active=$('editor');active.scrollTop=0;status('Keresési találat megnyitva: '+hit.l.title)};
+  results.append(b);
+ }
+}
+$('globalSearch').addEventListener('input',updateGlobalSearch);
+
+$('addSubject').onclick=()=>{const name=prompt('Új tantárgy neve:');if(!name?.trim())return;const s={id:uuid(),name:name.trim(),lessons:[]};project.subjects.push(s);sid=s.id;lid=null;mark();render()};
+
+$('addLesson').onclick=()=>{if(!subj()){alert('Először válassz tantárgyat.');return}const title=prompt('Új lecke címe:');if(!title?.trim())return;const l={id:uuid(),title:title.trim(),content:''};subj().lessons.push(l);lid=l.id;mark();render()};
+
+// 2.1.3: explicit user-click download fallback for Tauri WebView.
+let lastJSONBackupURL=null;
+$('save').onclick=()=>{
+ try{
+  const json=JSON.stringify(project,null,2);
+  const url=URL.createObjectURL(new Blob([json],{type:'application/json;charset=utf-8'}));
+  const notice=$('studioNotice');notice.replaceChildren();notice.style.display='block';notice.style.borderColor='#5c91a9';
+  const heading=el('div','A JSON biztonsági mentés elkészült. A letöltéshez kattints az alábbi gombra:');
+  const a=el('a','⬇ JSON-projekt letöltése');a.href=url;a.download='misa-studio-projekt.json';a.className='btn';a.style.display='inline-block';a.style.marginTop='12px';a.style.textDecoration='none';a.style.background='#137a63';
+  a.onclick=()=>{status('JSON letöltés elindítva. Ellenőrizd a Letöltések mappát, mielőtt bezárod a Studiót.');};
+  notice.append(heading,a);
+  if(lastJSONBackupURL)URL.revokeObjectURL(lastJSONBackupURL);
+  lastJSONBackupURL=url;
+  status('JSON-mentés előkészítve. Kattints a megjelenő zöld letöltés gombra.');
+  notice.scrollIntoView({block:'nearest',behavior:'smooth'});
+ }catch(err){const notice=$('studioNotice');notice.textContent='JSON mentési hiba: '+err.message;notice.style.display='block';status('JSON mentési hiba: '+err.message)}
+};;
+
+$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const p=JSON.parse(await file.text());if(!p||!Number.isInteger(p.grade)||!Array.isArray(p.subjects)||!p.subjects.every(s=>typeof s.id==='string'&&typeof s.name==='string'&&Array.isArray(s.lessons)&&s.lessons.every(l=>typeof l.id==='string'&&typeof l.title==='string'&&typeof l.content==='string')))throw Error('Nem megfelelő Misa Studio projektformátum.');if(dirty&&!confirm('A nem mentett módosítások elvesznek. Folytatod?'))return;discardAutosave();autosaveBlocked=false;project=p;sid=null;lid=null;qidx=0;dirty=false;resetHistory();autosaveLabel(autosaveAvailable?'készen áll (helyi vészmentés)':'nem elérhető');render();schedulePermanent();status('Megnyitva: '+file.name+' – '+p.subjects.length+' tantárgy.')}catch(err){alert('Nem sikerült megnyitni: '+err.message)}finally{e.target.value=''}};
+
+$('new').onclick=()=>{if(dirty&&!confirm('A nem mentett módosítások elvesznek. Folytatod?'))return;discardAutosave();autosaveBlocked=false;project=fresh();sid=null;lid=null;qidx=0;dirty=false;resetHistory();autosaveLabel(autosaveAvailable?'készen áll (helyi vészmentés)':'nem elérhető');render();schedulePermanent();status('Új tesztprojekt létrehozva.')};
+
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+
+</script>
+<script>
+
+/* Misa Studio 1.2: conservatively patch only the BANKS JSON payload. */
+
+'use strict';
+
+let studioBaseHTML=null, studioBaseBanks=null, studioBaseHash=null;
+
+// 2.9.9 – Tartós, helyi projekt és forrás-HTML tárolás.
+// Nem felhős szinkronizálás: csak ezen a számítógépen, ebben az alkalmazásprofilban működik.
+const MISA_DB='misa-studio-local-project-v1';
+let persistentTimer=null, persistentReady=false, persistentDB=null;
+function openMisaDB(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(Error('IndexedDB nem érhető el'));return;}
+  const req=indexedDB.open(MISA_DB,1);
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('data'))req.result.createObjectStore('data');};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||Error('Adatbázishiba'));
+ });
+}
+function misaDBGet(key){
+ return new Promise((resolve,reject)=>{
+  const req=persistentDB.transaction('data','readonly').objectStore('data').get(key);
+  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });
+}
+function misaDBPut(key,value){
+ return new Promise((resolve,reject)=>{
+  const tx=persistentDB.transaction('data','readwrite');
+  tx.objectStore('data').put(value,key);
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);
+  tx.onabort=()=>reject(tx.error||Error('Mentés megszakadt'));
+ });
+}
+let persistentSaving=Promise.resolve();
+function savePermanent(){
+ if(!persistentReady)return Promise.resolve();
+ const snapshot={project:structuredClone(project),selection:{sid,lid,qidx},baseHTML:studioBaseHTML,
+   savedAt:new Date().toISOString()};
+ persistentSaving=persistentSaving.catch(()=>{}).then(async()=>{
+    await misaDBPut('lastProject',snapshot);
+    // 09: a játék által olvasható kérdésbank ugyanabba az IndexedDB-be kerül.
+    // A Studio eredeti ellenőrzött export-konverzióját használjuk.
+    try{
+      if(typeof BANKS==='undefined'||!Array.isArray(BANKS))throw Error('A beépített kérdésbank hiányzik');
+      const converted=makeExport(BANKS,snapshot.project);
+      if(!converted||!Array.isArray(converted.result))throw Error('A kérdésbank nem állítható elő');
+      await misaDBPut('gameBanks',{version:1,savedAt:snapshot.savedAt,banks:converted.result});
+    }catch(error){console.warn('A játék kérdésbankjának frissítése nem sikerült:',error);autosaveLabel('A projekt mentve, de a játék szinkronizálása nem sikerült: '+error.message);}
+  });
+ return persistentSaving.then(()=>autosaveLabel('projekt és forrás HTML helyben mentve: '+new Date().toLocaleTimeString('hu-HU')))
+  .catch(err=>{autosaveLabel('tartós mentési hiba – készíts JSON biztonsági mentést!');console.error(err);});
+}
+function schedulePermanent(){
+ if(!persistentReady)return;
+ clearTimeout(persistentTimer);
+ persistentTimer=setTimeout(()=>{savePermanent();},1400);
+}
+async function initializePermanent(){
+ let saved=null;
+ try{
+  persistentDB=await openMisaDB();
+  saved=await misaDBGet('lastProject');
+  persistentReady=true;
+ }catch(err){
+  persistentReady=false;
+  console.warn('Állandó tároló nem elérhető:',err);
+ }
+ let emergency=null;
+ try{
+  const raw=localStorage.getItem(AUTOSAVE_KEY);
+  if(raw){
+   const candidate=JSON.parse(raw),p=candidate?.project;
+   if(candidate.version===1&&p&&Number.isInteger(p.grade)&&Array.isArray(p.subjects)&&
+      p.subjects.every(x=>typeof x.id==='string'&&Array.isArray(x.lessons)))emergency=candidate;
+  }
+ }catch(err){console.warn('Korábbi vészmentés nem olvasható:',err);}
+ const validSaved=saved?.project&&Number.isInteger(saved.project.grade)&&
+   Array.isArray(saved.project.subjects);
+ const emergencyNewer=emergency&&(!validSaved||
+   Date.parse(emergency.savedAt||0)>Date.parse(saved.savedAt||0));
+ const chosen=emergencyNewer?emergency:saved;
+ if(chosen?.project&&(emergencyNewer||validSaved)){
+  project=chosen.project;
+  sid=chosen.selection?.sid??null;lid=chosen.selection?.lid??null;
+  qidx=Number.isInteger(chosen.selection?.qidx)?chosen.selection.qidx:0;
+  if(saved?.baseHTML){
+   try{
+    const parsed=locateBanks(saved.baseHTML);
+    studioBaseHTML=saved.baseHTML;studioBaseBanks=parsed.banks;
+    studioBaseHash=await hashBanks(parsed.banks);
+   }catch(err){console.warn('Forrás HTML helyreállítása sikertelen:',err);}
+  }
+  dirty=!!emergencyNewer;
+  resetHistory();render();
+  $('studioNotice').style.display='none';
+  autosaveBlocked=false;
+  status('A legutóbbi projekt automatikusan betöltve.');
+  if(emergencyNewer&&persistentReady)await savePermanent();
+  autosaveLabel(persistentReady?'projekt automatikusan betöltve (állandó helyi mentés)':
+    'vészmentés betöltve; készíts JSON biztonsági mentést');
+  return;
+ }
+ if(emergency){
+  inspectAutosave();
+  return;
+ }
+ if(persistentReady){
+  autosaveLabel('helyi mentés készen áll – felhőből töltsd be a tananyagot');
+ }else autosaveLabel('helyi tartós mentés nem érhető el – készíts JSON biztonsági mentést');
+}
+
+function studioMessage(message, error=false){const n=document.getElementById('studioNotice');n.textContent=(error?'HIBA: ':'')+message;n.style.display='block';n.style.borderColor=error?'#ed8896':'#5c91a9';status(message);n.scrollIntoView({block:'nearest',behavior:'smooth'});}
+// 2.5.5.3: Tauri WebView-kompatibilis, nem blokkoló törlési megerősítés.
+function studioDeleteConfirm(message){return new Promise(resolve=>{
+ const n=document.getElementById('studioNotice');n.replaceChildren();n.style.display='block';n.style.borderColor='#ed8896';
+ const p=document.createElement('div');p.textContent=message;p.style.whiteSpace='pre-wrap';
+ const yes=document.createElement('button');yes.textContent='Igen, kérdés törlése';yes.className='danger';yes.style.margin='10px 10px 0 0';
+ const no=document.createElement('button');no.textContent='Mégse';no.style.marginTop='10px';
+ const finish=answer=>{n.style.display='none';resolve(answer)};
+ yes.onclick=()=>finish(true);no.onclick=()=>finish(false);
+ n.append(p,yes,no);n.scrollIntoView({block:'nearest',behavior:'smooth'});
+});}
+function studioBulkConfirm(message){return new Promise(resolve=>{
+ const n=document.getElementById('studioNotice');n.replaceChildren();n.style.display='block';n.style.borderColor='#e7bb66';
+ const p=document.createElement('div');p.textContent=message;
+ const yes=document.createElement('button');yes.textContent='Igen, áthelyezés';yes.className='primary';yes.style.margin='10px 10px 0 0';
+ const no=document.createElement('button');no.textContent='Mégse';no.style.marginTop='10px';
+ const done=value=>{n.style.display='none';resolve(value)};
+ yes.onclick=()=>done(true);no.onclick=()=>done(false);n.append(p,yes,no);n.scrollIntoView({block:'nearest',behavior:'smooth'});
+});}
+function studioConfirm(message){return new Promise(resolve=>{const n=document.getElementById('studioNotice');n.replaceChildren();n.style.display='block';n.style.borderColor='#5c91a9';const p=document.createElement('div');p.textContent=message;p.style.whiteSpace='pre-wrap';const yes=document.createElement('button');yes.textContent='HTML fájl elkészítése';yes.className='primary';yes.style.margin='10px 10px 0 0';const no=document.createElement('button');no.textContent='Mégse';no.style.marginTop='10px';yes.onclick=()=>{n.style.display='none';resolve(true)};no.onclick=()=>{n.style.display='none';resolve(false)};n.append(p,yes,no);n.scrollIntoView({block:'nearest',behavior:'smooth'});});}
+
+
+function stableJSON(v){if(Array.isArray(v))return '['+v.map(stableJSON).join(',')+']';if(v&&typeof v==='object')return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stableJSON(v[k])).join(',')+'}';return JSON.stringify(v)}
+
+// SHA-256 fallback for file:// pages (Safari may not expose crypto.subtle).
+
+function sha256Fallback(bytes){
+
+ const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+
+ const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+
+ const n=bytes.length, size=Math.ceil((n+9)/64)*64, data=new Uint8Array(size);data.set(bytes);data[n]=128;
+
+ const bits=BigInt(n)*8n;for(let j=0;j<8;j++)data[size-1-j]=Number((bits>>BigInt(j*8))&255n);
+
+ const rot=(x,n)=>(x>>>n)|(x<<(32-n));
+
+ for(let offset=0;offset<size;offset+=64){const w=new Uint32Array(64);for(let i=0;i<16;i++){let j=offset+i*4;w[i]=((data[j]<<24)|(data[j+1]<<16)|(data[j+2]<<8)|data[j+3])>>>0}for(let i=16;i<64;i++){let x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(rot(x,7)^rot(x,18)^(x>>>3))+w[i-7]+(rot(y,17)^rot(y,19)^(y>>>10)))>>>0}let [a,b,c,d,e,f,g,h]=H;for(let i=0;i<64;i++){let t1=(h+(rot(e,6)^rot(e,11)^rot(e,25))+((e&f)^(~e&g))+K[i]+w[i])>>>0,t2=((rot(a,2)^rot(a,13)^rot(a,22))+((a&b)^(a&c)^(b&c)))>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0}for(let i=0;i<8;i++)H[i]=(H[i]+[a,b,c,d,e,f,g,h][i])>>>0}
+
+ return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+
+}
+
+async function hashBanks(banks){const data=new TextEncoder().encode(stableJSON(banks));if(globalThis.crypto?.subtle){const buf=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(buf),x=>x.toString(16).padStart(2,'0')).join('')}return sha256Fallback(data)}
+
+function locateBanks(html){const marker='const BANKS=';const pos=html.indexOf(marker);if(pos<0)throw Error('Nem található const BANKS= a HTML-ben.');let start=pos+marker.length;while(/\s/.test(html[start]||''))start++;if(!['[','{'].includes(html[start]))throw Error('Nem JSON-ként kezdődik a BANKS adatblokk.');let stack=[],quoted=false,esc=false;for(let i=start;i<html.length;i++){let c=html[i];if(quoted){if(esc)esc=false;else if(c==='\\\\')esc=true;else if(c==='"')quoted=false;continue}if(c==='"'){quoted=true;continue}if(c==='['||c==='{')stack.push(c);if(c===']'||c==='}'){const op=stack.pop();if(!op||!(op==='['&&c===']'||op==='{'&&c==='}'))throw Error('Hibás BANKS zárójelek');if(!stack.length){const banks=JSON.parse(html.slice(start,i+1));if(!Array.isArray(banks)||!banks.every(b=>Array.isArray(b.items)))throw Error('Hibás kérdésbank formátum');return {start,end:i+1,banks}}}}throw Error('Nem zárult le a BANKS blokk')}
+
+function originalType(item){if(typeof item.type==='string'&&item.type)return item.type;if(item.kind==='choice')return 'legacy-choice';if(item.kind==='type')return 'legacy-type';return 'unknown'}
+
+const supportedTypes=new Set(['choice','fill','match','order','abc','legacy-choice','legacy-type']);
+
+function acceptedLegacyAnswer(value,block){
+ const norm=s=>String(s).normalize('NFC').trim().toLocaleLowerCase('hu').replace(/^[\s.,!?;:„”"'()]+|[\s.,!?;:„”"'()]+$/g,'').replace(/\s+/g,' ');
+ let variants=[];try{variants=JSON.parse(getField(block,'Elfogadott válaszok JSON:')||'[]')}catch{}
+ return [getField(block,'Helyes válasz:'),...(Array.isArray(variants)?variants:[])].some(a=>norm(value)===norm(a));
+}
+function makeBlock(item,id){const type=originalType(item),q=item.q??item.prompt??'',opts=item.opts??item.choices??[],ans=item.answer??'',page=item.page??'',exp=item.explain??'';let s=['Azonosító: '+id,'Típus: '+type,'Oldal: '+page,'Kérdés: '+q,'Válaszok: '+opts.join(' | '),'Helyes válasz: '+ans,'Magyarázat: '+exp].join('\n');if(type==='match')s+='\nPárok JSON: '+JSON.stringify(item.pairs??[]);if(type==='order'||type==='abc')s+='\nSzavak JSON: '+JSON.stringify(item.words??[]);if(type==='order'&&Array.isArray(item.acceptedOrders)&&item.acceptedOrders.length)s+='\nElfogadott sorrendek JSON: '+JSON.stringify(item.acceptedOrders);if(type==='fill')s+='\nSegítség: '+(item.tip??'');if(type.startsWith('legacy-'))s+='\nForrás: '+(item.source??'');if(type==='legacy-type'&&Array.isArray(item.acceptedAnswers)&&item.acceptedAnswers.length)s+='\nElfogadott válaszok JSON: '+JSON.stringify(item.acceptedAnswers);if(typeof item.misaImage==='string'&&item.misaImage)s+='\nKép adat: '+item.misaImage;if(item.misaAnswerImages&&Object.keys(item.misaAnswerImages).length)s+='\nVálaszképek JSON: '+JSON.stringify(item.misaAnswerImages);return s}
+
+function subjectFor(title){let t=title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(t.includes('kornyezetismeret')||t.includes('oh-kor03'))return 'Környezetismeret';if(t.includes('digitalis kultura'))return 'Digitális kultúra';if(t.includes('matematika'))return 'Matematika';if(t.includes('etika 3')||t.startsWith('etika '))return 'Etika';if(t.includes('english for you')||t.includes('angol nyelv'))return 'Angol nyelv';if(t.includes('irodalom')||t.includes('hetszinvirag')||t.includes('szovegrol szovegre'))return 'Irodalom';return 'Nyelvtan'}
+
+function downloadFile(name,content,type){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
+
+function readProjectFromBanks(banks,hash){const p=fresh();p.sourceFingerprint=hash;const grouped=new Map();for(let bi=0;bi<banks.length;bi++){const b=banks[bi];for(let ii=0;ii<b.items.length;ii++){const item=b.items[ii],title=(b.title||'Ismeretlen')+' – '+(item.topic||'Egyéb');if(!grouped.has(title))grouped.set(title,[]);grouped.get(title).push(makeBlock(item,`b${bi}-i${ii}`))}}for(const [title,blocks] of grouped){const sub=p.subjects.find(s=>s.name===subjectFor(title));sub.lessons.push({id:uuid(),title,content:blocks.join(SEP)})}return p}
+
+function checkPage(block){const raw=getField(block,'Oldal:').trim();if(!raw||['null','<null>','nil','none','undefined','(null)'].includes(raw.toLowerCase()))return undefined;if(!/^\d+$/.test(raw))throw Error('Érvénytelen oldalszám: '+raw);return Number(raw)}
+
+function validatedItem(block,type,old){const q=getField(block,'Kérdés:').trim(),explain=getField(block,'Magyarázat:');if(!q)throw Error('Üres kérdés');const result={...(old||{})};const imageData=getField(block,'Kép adat:');if(imageData){if(!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(imageData)||imageData.length>1450000)throw Error('Érvénytelen vagy túl nagy kép');result.misaImage=imageData}else delete result.misaImage;let answerImages={};try{answerImages=JSON.parse(getField(block,'Válaszképek JSON:')||'{}')}catch{throw Error('Hibás válaszképek JSON')};if(!answerImages||typeof answerImages!=='object'||Array.isArray(answerImages))throw Error('Hibás válaszképek JSON');for(const [key,data] of Object.entries(answerImages)){if(!key||typeof data!=='string'||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)||data.length>1450000)throw Error('Érvénytelen vagy túl nagy válaszkép: '+key)}if(Object.keys(answerImages).length)result.misaAnswerImages=answerImages;else delete result.misaAnswerImages;if(type.startsWith('legacy-')){result.prompt=q;result.kind=type==='legacy-choice'?'choice':'type';result.source=getField(block,'Forrás:');result.explain=explain;const answer=getField(block,'Helyes válasz:');if(!answer)throw Error('Hiányzik a helyes válasz');result.answer=answer;if(type==='legacy-choice'){const opts=getField(block,'Válaszok:').split(' | ').map(s=>s.trim()).filter(Boolean);if(opts.length<2||new Set(opts).size!==opts.length||!opts.includes(answer))throw Error('Hibás válaszlehetőségek');result.choices=opts;if(Object.keys(answerImages).some(k=>!opts.includes(k)))throw Error('Válaszképhez nem tartozik válasz')}else{result.choices=[];if(Object.keys(answerImages).length)throw Error('Ehhez a feladattípushoz nem adható válaszkép');const raw=getField(block,'Elfogadott válaszok JSON:');let alts=[];if(raw){try{alts=JSON.parse(raw)}catch{throw Error('Hibás alternatív mondatok JSON')};if(!Array.isArray(alts)||!alts.every(v=>typeof v==='string'&&v.trim()))throw Error('Az alternatív mondatok szöveges tömbje szükséges')}if(alts.length)result.acceptedAnswers=alts;else delete result.acceptedAnswers}return result}
+
+ result.q=q;result.explain=explain;result.type=type;const page=checkPage(block);if(page===undefined)delete result.page;else result.page=page;
+
+ if(type==='choice'){const opts=getField(block,'Válaszok:').split(' | ').map(s=>s.trim()).filter(Boolean),answer=getField(block,'Helyes válasz:');if(opts.length<2||new Set(opts).size!==opts.length||!opts.includes(answer))throw Error('A helyes válasz legyen a legalább két különböző lehetőség egyike');result.opts=opts;result.answer=answer;if(Object.keys(answerImages).some(k=>!opts.includes(k)))throw Error('Válaszképhez nem tartozik válasz')}
+
+ else if(type==='fill'){result.answer=getField(block,'Helyes válasz:');result.tip=getField(block,'Segítség:');if(!result.answer.trim())throw Error('Hiányzik a helyes válasz')}
+
+ else if(type==='match'){const pairs=JSON.parse(getField(block,'Párok JSON:'));if(!Array.isArray(pairs)||pairs.length<2||!pairs.every(p=>Array.isArray(p)&&p.length===2&&p.every(s=>typeof s==='string'&&s.trim())))throw Error('Legalább két érvényes szópár kell');result.pairs=pairs}
+
+ else if(type==='order'||type==='abc'){const words=JSON.parse(getField(block,'Szavak JSON:'));if(!Array.isArray(words)||words.length<2||!words.every(s=>typeof s==='string'&&s.trim()))throw Error('Legalább két sorrendi elem kell');result.words=words;
+ if(type==='order'){
+  const raw=getField(block,'Elfogadott sorrendek JSON:').trim();let variants=[];
+  if(raw){try{variants=JSON.parse(raw)}catch{throw Error('Hibás elfogadott sorrendek JSON')};if(!Array.isArray(variants))throw Error('Az elfogadott sorrendeknek tömbnek kell lenniük');
+   const norm=w=>String(w).normalize('NFC').trim().toLocaleLowerCase('hu').replace(/[.!?]+$/u,'');
+   const counts=arr=>{const m=new Map();arr.forEach(w=>m.set(norm(w),(m.get(norm(w))||0)+1));return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0],'hu'))};
+   for(const v of variants){if(!Array.isArray(v)||v.length!==words.length||!v.every(w=>typeof w==='string'&&w.trim())||JSON.stringify(counts(v))!==JSON.stringify(counts(words)))throw Error('Minden elfogadott sorrendnek pontosan az eredeti szavakat kell tartalmaznia');}
+  }
+  if(variants.length)result.acceptedOrders=variants;else delete result.acceptedOrders;
+ }else delete result.acceptedOrders;
+ }
+
+ return result}
+
+// A játék nyelvtani útvonalát a TOPIC_ORDER rögzíti.
+
+// Ha átnevezünk egy témakört, az új névnek ugyanarra a helyre kell kerülnie.
+
+function updateSubjectMenuOrder(html, editedProject){
+ const declaration=/const SUBJECTS=\[\[.*?\]\];/s;
+ const match=declaration.exec(html);
+ if(!match)throw Error("A forrásjáték SUBJECTS listája nem található.");
+ // A v373 SUBJECTS JavaScript-tömb, nem JSON (egyszeres idézőjelek).
+ // Csak az ismert, egyszerű [emoji, név] párokat olvassuk ki; nem futtatunk forráskódot.
+ const source=match[0].slice("const SUBJECTS=".length,-1);
+ const pairPattern=/\[\s*'([^'\\]*)'\s*,\s*'([^'\\]*)'\s*\]/g;
+ const original=[...source.matchAll(pairPattern)].map(m=>[m[1],m[2]]);
+ const leftover=source.replace(pairPattern,'').replace(/[\[\],\s]/g,'');
+ if(leftover||!original.length||new Set(original.map(x=>x[1])).size!==original.length)throw Error("Érvénytelen vagy nem támogatott tantárgylista a játékban.");
+ const originalNames=original.map(x=>x[1]);
+ const ordered=editedProject.subjects.map(x=>x.name);
+ if(ordered.length!==originalNames.length||new Set(ordered).size!==ordered.length||ordered.some(x=>!originalNames.includes(x)))throw Error("A Studio tantárgynevei nem egyeznek a játék eredeti tantárgyaival. Az exportált főmenü sorrendje nem állítható be biztonságosan.");
+ const marker="const MISA_STUDIO_SUBJECT_ORDER=";
+ if(html.includes(marker))throw Error("A forrásjáték már tartalmaz Studio tantárgysorrendet. Válaszd az eredeti v373 HTML-t.");
+ const originalLoop="SUBJECTS.forEach(([em,name],si)=>{";
+ if(!html.includes(originalLoop))throw Error("A játék főmenüjének megjelenítése nem kompatibilis a tantárgysorrend-exporttal.");
+ const updated=html.replace(match[0],match[0]+"\n"+marker+JSON.stringify(ordered)+";")
+ .replace(originalLoop,"SUBJECTS.map(([em,name],si)=>({em,name,si})).sort((a,b)=>MISA_STUDIO_SUBJECT_ORDER.indexOf(a.name)-MISA_STUDIO_SUBJECT_ORDER.indexOf(b.name)).forEach(({em,name,si})=>{");
+ if(!updated.includes(marker+JSON.stringify(ordered)+";"))throw Error("Nem sikerült átadni a tantárgysorrendet.");
+ return updated;
+}
+
+function updateTopicOrder(html, originalBanks, resultBanks, editedProject){
+ // A játék Nyelvtan / Témakörök menüjét a TOPIC_ORDER szabályozza.
+ // A témakörök sorrendje a Studio leckelistájából származik, nem a BANKS-beli pozíciójukból.
+ const rx=/const\s+TOPIC_ORDER\s*=\s*(\[[\s\S]*?\])\s*;/;
+ const match=rx.exec(html);
+ if(!match)throw Error('A játék TOPIC_ORDER listája nem található.');
+ let oldOrder;
+ try{oldOrder=JSON.parse(match[1]);if(!Array.isArray(oldOrder))throw Error('Nem lista');}
+ catch(e){throw Error('A játék TOPIC_ORDER listája nem olvasható.');}
+ const grammarBanks=resultBanks.slice(0,3);
+ const active=new Set(grammarBanks.flatMap(b=>b.items.map(x=>x.topic)));
+ const oldGrammarTopics=new Set(originalBanks.slice(0,3).flatMap(b=>b.items.map(x=>x.topic)));
+ const ordered=[];
+ const seen=new Set();
+ // A projekt leckéinek sorrendje irányadó. Csak az első három (nyelvtani)
+ // kérdésbank témáit rendezzük át; más tantárgyak menüjéhez nem nyúlunk.
+ for(const subject of editedProject.subjects){
+  for(const lesson of subject.lessons){
+   const blocks=splitContent(lesson.content).filter(isQuestion);
+   const bankIds=new Set();
+   for(const block of blocks){
+    const m=/^b(\d+)-i\d+$/.exec(getField(block,'Azonosító:'));
+    if(m)bankIds.add(Number(m[1]));
+   }
+   // A forrásbank nélküli, új kérdésekhez a leckecím bank-előtagja segít.
+   const matches=grammarBanks.map((b,i)=>({i,prefix:(b.title||'')+' – '})).filter(x=>lesson.title.startsWith(x.prefix));
+   if(![...bankIds].some(i=>i<3)&&!matches.length)continue;
+   const bankIndex=[...bankIds].find(i=>i<3)??matches[0]?.i;
+   if(bankIndex===undefined)continue;
+   const prefix=(resultBanks[bankIndex]?.title||'')+' – ';
+   const topic=lesson.title.startsWith(prefix)?lesson.title.slice(prefix.length).trim():lesson.title.trim();
+   if(active.has(topic)&&!seen.has(topic)){ordered.push(topic);seen.add(topic);}
+  }
+ }
+ // A nem módosított, de még létező témakörök maradjanak meg.
+ for(const topic of oldOrder){if(active.has(topic)&&!seen.has(topic)){ordered.push(topic);seen.add(topic);}}
+ for(const bank of grammarBanks)for(const item of bank.items){if(!seen.has(item.topic)){ordered.push(item.topic);seen.add(item.topic);}}
+ // Az eredeti, már nem létező témaköröket kihagyjuk, így nem jelennek meg üresen.
+ const next=ordered;
+ if(next.length!==active.size||new Set(next).size!==next.length)throw Error('Nem sikerült a nyelvtani témakörök sorrendjét összeállítani.');
+ const replacement='const TOPIC_ORDER='+JSON.stringify(next)+';';
+ return html.slice(0,match.index)+replacement+html.slice(match.index+match[0].length);
+}
+
+function addMultipleOrderSupport(html){
+ const old="if(actual.length===shuffled.length&&actual.every((v,i)=>v===expected[i]))complete('Nagyon ügyes vagy!');";
+ const next='// Több helyes mondatsorrend: az eredeti sorrend és a feladathoz megadott alternatívák.\n// x.acceptedOrders: pl. [["A","fán","énekel","a","madár."]] vagy teljes mondatok tömbje.\nlet accepted=actual.length===shuffled.length&&actual.every((v,i)=>v===expected[i]);\nif(!accepted&&kind===\'order\'&&actual.length===shuffled.length){\n  const normalizeWord=w=>String(w).normalize(\'NFC\').trim().toLocaleLowerCase(\'hu\').replace(/[.!?]+$/u,\'\');\n  const chosen=selected.map(i=>normalizeWord(shuffled[i].w));\n  const variants=Array.isArray(x.acceptedOrders)?x.acceptedOrders:[];\n  accepted=variants.some(variant=>{\n    const tokens=Array.isArray(variant)?variant:typeof variant===\'string\'?variant.trim().split(/\\s+/u):[];\n    if(tokens.length!==chosen.length)return false;\n    // Az alternatívának pontosan ugyanazokat a szavakat kell tartalmaznia.\n    const normalized=tokens.map(normalizeWord);\n    const counts=a=>a.reduce((m,w)=>(m[w]=(m[w]||0)+1,m),{});\n    const a=counts(normalized),b=counts((x.words||[]).map(normalizeWord));\n    if(Object.keys(a).some(k=>a[k]!==b[k])||Object.keys(a).length!==Object.keys(b).length)return false;\n    return normalized.every((w,i)=>w===chosen[i]);\n  });\n}\nif(accepted)complete(\'Nagyon ügyes vagy!\');';
+ if(html.includes('// Több helyes mondatsorrend:'))return html;
+ if(!html.includes(old))throw Error('A forrásjáték sorrendellenőrzése nem kompatibilis a több megoldással.');
+ return html.replace(old,next);
+}
+function addLegacySentenceSupport(html){
+ const old="if(norm($('typed').value.replace(/^[\s.,!?;:„”\"'()]+|[\s.,!?;:„”\"'()]+$/g,''))===norm(String(answer).replace(/^[\s.,!?;:„”\"'()]+|[\s.,!?;:„”\"'()]+$/g,''))){complete('Nagyon ügyes vagy!')}";
+ // A játék típusos beírásos ellenőrzését úgy bővítjük, hogy az eredeti megoldás is megmaradjon.
+ const marker="if(kind==='type'||kind==='fill')$('check').onclick=()=>{";
+ if(html.includes('MISA_LEGACY_SENTENCE_ALTERNATIVES'))return html;
+ if(!html.includes(marker))throw Error('A forrásjáték beírásos ellenőrzése nem kompatibilis.');
+ const before="if(norm($('typed').value.replace(/^[\s.,!?;:„”\"'()]+|[\s.,!?;:„”\"'()]+$/g,''))===norm(String(answer).replace(/^[\s.,!?;:„”\"'()]+|[\s.,!?;:„”\"'()]+$/g,'')))";
+ const replacement="if(([answer,...(kind==='type'&&Array.isArray(x.acceptedAnswers)?x.acceptedAnswers:[])].some(a=>norm($('typed').value.replace(/^[\\s.,!?;:„”\\\"'()]+|[\\s.,!?;:„”\\\"'()]+$/g,''))===norm(String(a).replace(/^[\\s.,!?;:„”\\\"'()]+|[\\s.,!?;:„”\\\"'()]+$/g,'')))))";
+ // Az eredeti regexes normalizálás helyett az ismert kód pontos feltételét cseréljük.
+ const start=html.indexOf(marker),end=html.indexOf("{complete('Nagyon ügyes vagy!')}",start);
+ if(end<0)throw Error('Nem található a beírásos helyes válasz ellenőrzése.');
+ const condition=html.slice(start+marker.length,end);
+ const opening=condition.indexOf('if(');if(opening<0)throw Error('Nincs if ellenőrzés');
+ const prefix=condition.slice(0,opening);
+ const injected="/* MISA_LEGACY_SENTENCE_ALTERNATIVES */if([answer,...(kind==='type'&&Array.isArray(x.acceptedAnswers)?x.acceptedAnswers:[])].some(a=>norm($('typed').value.replace(/^[\\s.,!?;:„”\"'()]+|[\\s.,!?;:„”\"'()]+$/g,''))===norm(String(a).replace(/^[\\s.,!?;:„”\"'()]+|[\\s.,!?;:„”\"'()]+$/g,''))))";
+ return html.slice(0,start+marker.length)+prefix+injected+html.slice(end);
+}
+function addQuestionImageSupport(html){const marker="if(!x.story)html+=`<h2>${esc(question)}</h2>`;";if(!html.includes(marker))throw Error('A forrásjáték kérdésmegjelenítője nem kompatibilis a képes exporttal.');const code="\nif(typeof x.misaImage==='string'&&/^data:image\\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x.misaImage)){html+=`<div class=\"misa-studio-question-image\"><img src=\"${x.misaImage}\" alt=\"A feladathoz tartozó kép\" loading=\"lazy\"></div>`;}";const style="<style id=\"misa-studio-image-style\">.misa-studio-question-image{max-width:560px;margin:16px auto 22px;text-align:center}.misa-studio-question-image img{display:block;max-width:100%;max-height:360px;width:auto;height:auto;object-fit:contain;margin:auto;border-radius:8px}@media(max-width:680px){.misa-studio-question-image img{max-height:240px}}</style>";return html.replace(marker,marker+code).replace('</head>',style+'</head>');}
+function addAnswerImageSupport(html){
+ const marker='${x.topic.startsWith("Képes szótár")&&MISA_PICTURE_ASSETS[v]?`<img class="misa-picture" src="${MISA_PICTURE_ASSETS[v]}" alt="Képes válasz ${i+1}" loading="eager">`:esc(v)}';
+ if(!html.includes(marker))throw Error('A forrásjáték válaszmegjelenítője nem kompatibilis a képes válaszokkal.');
+ const replacement='${typeof x.misaAnswerImages?.[v]==="string"&&/^data:image\\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x.misaAnswerImages[v])?`<img class="misa-studio-answer-image" src="${x.misaAnswerImages[v]}" alt="${esc(v)}" loading="lazy"><span>${esc(v)}</span>`:(x.topic.startsWith("Képes szótár")&&MISA_PICTURE_ASSETS[v]?`<img class="misa-picture" src="${MISA_PICTURE_ASSETS[v]}" alt="Képes válasz ${i+1}" loading="eager">`:esc(v))}';
+ const css='<style id="misa-studio-answer-image-style">.misa-studio-answer-image{display:block;max-width:100%;max-height:180px;width:auto;height:auto;object-fit:contain;margin:5px auto 10px;border-radius:8px}.answer-btn .misa-studio-answer-image+span{display:block;text-align:center}@media(max-width:680px){.misa-studio-answer-image{max-height:120px}}</style>';
+ return html.replace(marker,replacement).replace('</head>',css+'</head>');
+}
+
+function makeExport(banks,p){
+
+ const originals=new Map(),seen=new Set(),changes=new Map(),additions=[],desiredOrder=new Map();
+
+ for(let bi=0;bi<banks.length;bi++){
+
+  const b=banks[bi];b.items.forEach((item,ii)=>{
+
+   const id=`b${bi}-i${ii}`,title=(b.title||'Ismeretlen')+' – '+(item.topic||'Egyéb');
+
+   originals.set(id,{bi,ii,item,title});
+
+  });
+
+ }
+
+ for(const sub of p.subjects)for(const lesson of sub.lessons){
+
+  const blocks=splitContent(lesson.content).filter(isQuestion);
+
+  const known=blocks.map(block=>originals.get(getField(block,'Azonosító:'))).filter(Boolean);
+
+  // A Studio sorrendje minden kérdésre érvényes, az újakra is.
+  // A csoport kulcsa az eredeti témakör, hogy az átnevezés se bontsa meg.
+  const orderedIds=blocks.map(block=>getField(block,'Azonosító:'));
+  const originalGroup=known[0]?.title;
+  if(originalGroup){
+   if(desiredOrder.has(originalGroup))throw Error('Az eredeti témakör több leckében szerepel: '+originalGroup);
+   desiredOrder.set(originalGroup,orderedIds);
+  }
+
+  const bankIds=new Set(known.map(o=>o.bi));
+
+  if(bankIds.size>1)throw Error('Egy lecke több eredeti kérdésbank kérdéseit tartalmazza: '+lesson.title);
+
+  const biForLesson=known[0]?.bi;
+
+  const prefix=biForLesson===undefined?'':(banks[biForLesson].title||'')+' – ';
+
+  const topic=lesson.title.startsWith(prefix)?lesson.title.slice(prefix.length).trim():lesson.title.trim();
+
+  if(!topic)throw Error('Üres leckecím: '+lesson.title);
+
+  for(const block of blocks){
+
+   const id=getField(block,'Azonosító:');if(!id||seen.has(id))throw Error('Hiányzó vagy ismétlődő azonosító: '+id);
+
+   seen.add(id);const type=getField(block,'Típus:');
+
+   if(id.startsWith('new-')){
+
+    if(!supportedTypes.has(type))throw Error('Nem támogatott új típus: '+type);
+
+    let bi=biForLesson;
+
+    if(bi===undefined){const matches=banks.map((b,i)=>({bi:i,prefix:(b.title||'')+' – '})).filter(x=>lesson.title.startsWith(x.prefix));
+
+     if(matches.length!==1)throw Error('Új kérdés bankja nem azonosítható: '+lesson.title);bi=matches[0].bi;}
+
+    let item;try{item=validatedItem(block,type,null)}catch(e){throw Error(lesson.title+' / '+id+': '+e.message)}
+
+    item.topic=topic;additions.push({bi,id,item});
+
+   }else{
+
+    const orig=originals.get(id);if(!orig)throw Error('Ismeretlen azonosító: '+id);
+    // Áthelyezett kérdés ugyanazon kérdésbankon belül.
+
+
+    const origType=originalType(orig.item);let item;
+
+    if(!supportedTypes.has(origType)){
+
+     if(block!==makeBlock(orig.item,id))throw Error('Nem támogatott feladattípus módosult: '+id);
+
+     item={...orig.item};
+
+    }else if(block===makeBlock(orig.item,id))item={...orig.item};
+
+    else{
+
+     if(type&&type!==origType)throw Error('Meglévő kérdés típusa nem változtatható: '+id);
+
+     try{item=validatedItem(block,origType,orig.item)}catch(e){throw Error(lesson.title+' / '+id+': '+e.message)}
+
+    }
+
+    item.topic=topic;changes.set(id,item);
+
+
+
+   }
+
+  }
+
+ }
+
+ let removed=0,untouched=0;const result=banks.map((bank,bi)=>{
+
+  const byID=new Map();bank.items.forEach((item,ii)=>{
+
+   const id=`b${bi}-i${ii}`;
+
+   if(changes.has(id))byID.set(id,changes.get(id));
+
+   else if(!supportedTypes.has(originalType(item))){byID.set(id,item);untouched++}
+
+   else removed++;
+
+  });
+
+  for(const a of additions.filter(a=>a.bi===bi))byID.set(a.id,a.item);
+
+  // Megtartjuk a témakörök helyét a bankban, de a témakörön belül
+  // a Studio teljes sorrendjét követjük (új és meglévő kérdések együtt).
+  const slotsByTopic=new Map();
+  bank.items.forEach((item,ii)=>{
+   const id=`b${bi}-i${ii}`;
+   const group=(bank.title||'Ismeretlen')+' – '+(item.topic||'Egyéb');
+   if(!slotsByTopic.has(group))slotsByTopic.set(group,[]);
+   if(byID.has(id))slotsByTopic.get(group).push(id);
+  });
+  const items=[],emitted=new Set(),used=new Set();
+  for(const [group,existingIds] of slotsByTopic){
+   const desired=desiredOrder.get(group);
+   const ids=desired ?? existingIds;
+   const expected=new Set([...existingIds,...(desired||[]).filter(id=>id.startsWith('new-') && additions.some(a=>a.bi===bi&&a.id===id))]);
+   // Ha a témakörnek nincs Studio-beli szerkesztett sorrendje, az eredetit őrizzük.
+   if(desired){
+    if(ids.length!==expected.size||ids.some(id=>!expected.has(id)))throw Error('A kérdéssorrend nem egyezik a témakör tartalmával: '+group);
+   }
+   for(const id of ids){if(!byID.has(id)||used.has(id))throw Error('Hibás vagy ismétlődő kérdés: '+id);items.push(byID.get(id));used.add(id)}
+   emitted.add(group);
+  }
+  // Teljesen új témakörök és csak új kérdésekből álló leckék.
+  for(const a of additions.filter(a=>a.bi===bi))if(!used.has(a.id)){items.push(a.item);used.add(a.id)}
+  if(used.size!==byID.size)throw Error('Nem sikerült minden kérdést exportálni.');
+
+  return {...bank,items};
+
+ });
+
+ return {result,removed,added:additions.length,untouched};
+
+}
+
+function checkProject(){
+
+ if(!project.subjects.length)throw Error('Nincs tantárgy.');
+
+ let questions=0;const ids=new Set();
+
+ for(const s of project.subjects){if(!s.name.trim())throw Error('Üres tantárgynév');
+
+  for(const l of s.lessons){if(!l.title.trim())throw Error('Üres leckecím');
+
+   for(const block of splitContent(l.content).filter(isQuestion)){
+
+    questions++;const id=getField(block,'Azonosító:');if(!id||ids.has(id))throw Error('Hiányzó vagy ismétlődő kérdésazonosító: '+id);ids.add(id);
+
+    const type=getField(block,'Típus:');if(!supportedTypes.has(type))continue;
+
+    try{validatedItem(block,type,null)}catch(e){throw Error(l.title+' / '+id+': '+e.message)}
+
+   }
+
+  }
+
+ }
+
+ return questions;
+
+}
+
+// 2.5.4: kizárólag olvasó, projekt-szintű tananyagellenőrzés.
+function auditProject(){
+ const findings=[],duplicates=new Map(),ids=new Map();let total=0;
+ const report=(severity,s,l,i,message,previous=null,category="Általános",advice="")=>{
+  if(category==='Általános'){
+   category=/azonosító/i.test(message)?'Azonosítók':/azonos tartalmú/i.test(message)?'Ismétlődések':/kép|JSON/i.test(message)?'Képek és adatformátum':/válasz|válaszlehetőség/i.test(message)?'Válaszok':/kérdésszöveg/i.test(message)?'Kérdésszöveg':/feladattípus/i.test(message)?'Feladattípusok':'Feladatadatok';
+   advice=advice||'Nyisd meg az érintett kérdést, ellenőrizd a megjelölt mezőt, majd futtasd újra az ellenőrzést.';
+  }
+  findings.push({severity,s,l,i,message,previous,category,advice});
+ };
+ const imgOK=data=>/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)&&data.length<=1450000;
+ for(const s of project.subjects)for(const l of s.lessons){
+  const blocks=splitContent(l.content);
+  for(let i=0;i<blocks.length;i++){
+   const block=blocks[i];if(!isQuestion(block))continue;total++;
+   const id=getField(block,'Azonosító:'),type=getField(block,'Típus:'),q=getField(block,'Kérdés:').trim();
+   if(!id)report('hiba',s,l,i,'Hiányzó kérdésazonosító.');
+   else if(ids.has(id))report('hiba',s,l,i,'Ismétlődő kérdésazonosító: '+id);
+   else ids.set(id,true);
+   if(!q||q==='Új kérdés')report('hiba',s,l,i,'Hiányzó vagy kitöltetlen kérdésszöveg.');
+   if(!supportedTypes.has(type)){report('figyelmeztetés',s,l,i,'Nem ismert feladattípus: '+(type||'(üres)'));continue;}
+   if(q){
+    // Csak a teljes, feladattípusonként releváns tartalom egyezése számít ismétlésnek.
+    // A képadatok is részei az összehasonlításnak; a puszta utasításszöveg nem elég.
+    const norm=v=>searchNormalize(v).replace(/\s+/g,' ').trim();
+    const relevant=type==='choice'||type==='legacy-choice'
+      ?[getField(block,'Válaszok:'),getField(block,'Helyes válasz:')]
+      :type==='fill'||type==='legacy-type'
+      ?[getField(block,'Helyes válasz:')]
+      :type==='match'?[getField(block,'Párok JSON:')]
+      :type==='order'||type==='abc'?[getField(block,'Szavak JSON:')]:[];
+    const key=JSON.stringify([type,norm(q),...relevant.map(norm),getField(block,'Kép adat:'),getField(block,'Válaszképek JSON:')]);
+    if(duplicates.has(key)){const prev=duplicates.get(key);report('figyelmeztetés',s,l,i,'Azonos tartalmú feladat: '+prev.s.name+' / '+prev.l.title,prev);}
+    else duplicates.set(key,{s,l,i});
+   }
+   // 2.6.2: tartalmi teljesség – a hiányzó magyarázat figyelmeztetés, nem blokkoló hiba.
+   const explanation=getField(block,'Magyarázat:').trim();
+   if(!explanation)report('figyelmeztetés',s,l,i,'Hiányzik a „Misa tanít” magyarázat.',null,'Magyarázat','Adj rövid, életkornak megfelelő magyarázatot a helyes megoldáshoz.');
+   else if(explanation.length<12)report('figyelmeztetés',s,l,i,'Nagyon rövid a magyarázat.',null,'Magyarázat','Ellenőrizd, hogy valóban segít-e megérteni a megoldást.');
+   if(type==='fill'&&!getField(block,'Segítség:').trim())report('figyelmeztetés',s,l,i,'A beírásos feladathoz nincs segítség.',null,'Segítség','A segítség opcionális; szükség esetén adj meg egy rövid tippet.');
+   if(type==='choice'||type==='legacy-choice'){
+    const rawOptions=getField(block,'Válaszok:').split(' | ').map(x=>x.trim()).filter(Boolean);
+    if(rawOptions.some(x=>x==='Első'||x==='Második')&&q==='Új kérdés')report('figyelmeztetés',s,l,i,'Mintaválaszok maradtak a kérdésben.',null,'Válaszok','Cseréld a mintaválaszokat valódi megoldási lehetőségekre.');
+   }
+   const options=getField(block,'Válaszok:').split(' | ').map(x=>x.trim()).filter(Boolean),answer=getField(block,'Helyes válasz:');
+   if(type==='choice'||type==='legacy-choice'){
+    if(options.length<2||new Set(options).size!==options.length)report('hiba',s,l,i,'Legalább két különböző válaszlehetőség szükséges.');
+    if(!answer||!options.includes(answer))report('hiba',s,l,i,'A helyes válasz nincs a válaszlehetőségek között.');
+   }else if(type==='fill'||type==='legacy-type'){
+    if(!answer.trim())report('hiba',s,l,i,'Hiányzik a helyes válasz.');
+   }else if(type==='match'||type==='order'||type==='abc'){
+    const key=type==='match'?'Párok JSON:':'Szavak JSON:';
+    try{const items=JSON.parse(getField(block,key));if(!Array.isArray(items)||items.length<2|| (type==='match'?!items.every(x=>Array.isArray(x)&&x.length===2&&x.every(y=>typeof y==='string'&&y.trim())):!items.every(x=>typeof x==='string'&&x.trim())))throw Error();}
+    catch{report('hiba',s,l,i,'Hibás vagy hiányos '+(type==='match'?'párosítás':'sorrendfeladat')+'.');}
+   }
+   const questionImage=getField(block,'Kép adat:');
+   if(questionImage&&!imgOK(questionImage))report('hiba',s,l,i,'Hibás vagy túl nagy kérdéskép.');
+   const raw=getField(block,'Válaszképek JSON:');
+   if(raw){try{const images=JSON.parse(raw);if(!images||typeof images!=='object'||Array.isArray(images))throw Error();for(const [key,data] of Object.entries(images)){if(!imgOK(data))report('hiba',s,l,i,'Hibás vagy túl nagy válaszkép: '+key);if(!options.includes(key))report('hiba',s,l,i,'Válaszképhez nem tartozik válasz: '+key);}}
+    catch{report('hiba',s,l,i,'Érvénytelen válaszképek JSON.');}}
+  }
+ }
+ return {findings,total};
+}
+let auditLast=null;
+function showAuditResults(){
+ if(!auditLast)return;
+ const {findings,total}=auditLast,results=$('auditResults'),summary=$('auditSummary');
+ const severity=$('auditSeverity').value,subjectId=$('auditSubject').value,category=$('auditCategory').value;
+ const errors=findings.filter(f=>f.severity==='hiba').length,warnings=findings.length-errors;
+ summary.textContent=total+' kérdés ellenőrizve · '+errors+' hiba · '+warnings+' figyelmeztetés.';
+ const visible=findings.filter(f=>(severity==='all'||f.severity===severity)&&(subjectId==='all'||f.s.id===subjectId)&&(category==='all'||f.category===category));
+ $('auditVisible').textContent='Megjelenítve: '+visible.length+' találat.';
+ results.replaceChildren();results.classList.remove('compare-expanded');
+ if(!visible.length){results.append(el('p',findings.length?'Nincs találat a kiválasztott szűrőkkel.':'Az ellenőrző nem talált hibát vagy azonos tartalmú feladatot.','muted'));return;}
+ for(const f of visible){
+  const wrapper=el('div',undefined,'audit-result'+(f.severity==='hiba'?' error':''));
+  wrapper.append(el('div',f.category,'audit-category'));
+  const b=el('button',(f.severity==='hiba'?'❌ ':'⚠️ ')+f.message,'search-result');
+  b.append(el('small',f.s.name+' / '+f.l.title+' · '+getField(splitContent(f.l.content)[f.i],'Kérdés:').slice(0,95)));
+  b.onclick=()=>{sid=f.s.id;lid=f.l.id;qidx=f.i;render();$('editor').scrollTop=0;status('Ellenőrzési találat megnyitva: '+f.l.title);};
+  wrapper.append(b);if(f.advice)wrapper.append(el('div','Javaslat: '+f.advice,'audit-detail'));results.append(wrapper);
+  if(f.previous){
+   const panel=el('div',undefined,'compare-panel');
+   const toggle=el('button','🔍 Két feladat összehasonlítása');
+   toggle.setAttribute('aria-expanded','false');
+   const body=el('div');body.hidden=true;
+   toggle.onclick=()=>{body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));toggle.textContent=body.hidden?'🔍 Két feladat összehasonlítása':'▴ Összehasonlítás bezárása';results.classList.toggle('compare-expanded',!!results.querySelector('.compare-panel > div:not([hidden])'));};
+   const grid=el('div',undefined,'compare-grid');
+   const addSide=(hit,heading)=>{
+    const block=splitContent(hit.l.content)[hit.i]||'';
+    const side=el('div',undefined,'compare-side');
+    side.append(el('strong',heading));
+    side.append(el('div',hit.s.name+' / '+hit.l.title,'muted'));
+    const addField=(label,key)=>{const val=getField(block,key);if(!val)return;const line=el('div',undefined,'compare-line');line.append(el('span',label+': ','compare-label'),document.createTextNode(val));side.append(line)};
+    addField('Azonosító','Azonosító:');addField('Típus','Típus:');addField('Kérdés','Kérdés:');
+    const t=getField(block,'Típus:');
+    if(t==='choice'||t==='legacy-choice'){addField('Válaszok','Válaszok:');addField('Helyes válasz','Helyes válasz:');}
+    else if(t==='fill'||t==='legacy-type')addField('Helyes válasz','Helyes válasz:');
+    else if(t==='match')addField('Párok','Párok JSON:');
+    else if(t==='order'||t==='abc')addField('Szavak','Szavak JSON:');
+    const img=getField(block,'Kép adat:');
+    if(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(img)){const picture=el('img');picture.src=img;picture.alt='Kérdés képe';picture.className='compare-image';side.append(picture);}
+    const rawImages=getField(block,'Válaszképek JSON:');
+    if(rawImages){try{const images=JSON.parse(rawImages);for(const [name,data] of Object.entries(images)){if(typeof data!=='string'||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data))continue;side.append(el('div','Válaszkép: '+name,'muted'));const picture=el('img');picture.src=data;picture.alt='Válaszkép: '+name;picture.className='compare-image';side.append(picture);}}catch{side.append(el('p','Hibás válaszkép-adat.','muted'));}}
+    const open=el('button','Megnyitás a szerkesztőben');open.onclick=()=>{sid=hit.s.id;lid=hit.l.id;qidx=hit.i;render();const editorPanel=$('editor').closest('.panel');if(editorPanel){editorPanel.scrollTop=0;editorPanel.scrollIntoView({behavior:'smooth',block:'start'});}const activeQuestion=$('editor').querySelector('.questionform');if(activeQuestion){activeQuestion.scrollIntoView({behavior:'smooth',block:'nearest'});}status('Összehasonlított feladat megnyitva: '+hit.l.title);};side.append(open);grid.append(side);
+   };
+   addSide(f.previous,'Korábbi előfordulás');addSide(f,'Mostani előfordulás');
+   body.append(el('p','Az egyezés a feladattípus, kérdés, válaszok és képek alapján történt. A tananyag nem módosul.','muted'),grid);
+   panel.append(toggle,body);results.append(panel);
+  }
+ }
+}
+// 2.6.1: az áttekintő nem változtat projektadatot.
+function refreshOverview(){
+ const root=$('overviewContent');if(!root)return;root.replaceChildren();
+ const subjects=project.subjects;
+ const lessonCount=subjects.reduce((n,s)=>n+s.lessons.length,0);
+ const questionCount=subjects.reduce((n,s)=>n+s.lessons.reduce((m,l)=>m+splitContent(l.content).filter(isQuestion).length,0),0);
+ const emptyLessons=subjects.reduce((n,s)=>n+s.lessons.filter(l=>!splitContent(l.content).some(isQuestion)).length,0);
+ const stats=el('div',undefined,'overview-stats');
+ for(const [label,value] of [['Tantárgy',subjects.length],['Lecke',lessonCount],['Kérdés',questionCount],['Kérdés nélküli lecke',emptyLessons]]){
+  const tile=el('div',undefined,'overview-stat');tile.append(el('strong',String(value)),el('span',label));stats.append(tile);
+ }
+ root.append(stats);
+ for(const s of subjects){
+  const n=s.lessons.reduce((total,l)=>total+splitContent(l.content).filter(isQuestion).length,0);
+  const group=el('details',undefined,'overview-subject');
+  const heading=el('summary');heading.append(el('span',s.name),el('span',s.lessons.length+' lecke · '+n+' kérdés','muted'));group.append(heading);
+  const list=el('div',undefined,'overview-lessons');
+  if(!s.lessons.length)list.append(el('p','Még nincs lecke ebben a tantárgyban.','muted'));
+  for(const l of s.lessons){
+   const blocks=splitContent(l.content).filter(isQuestion),count=blocks.length;
+   const b=el('button',l.title,'overview-lesson');b.type='button';
+   const hint=el('small',count+' kérdés'+(count===0?' · Üres lecke':''),count===0?'overview-warning':'muted');b.append(hint);
+   b.onclick=()=>{sid=s.id;lid=l.id;qidx=0;render();$('editor').scrollTop=0;status('Lecke megnyitva az áttekintőből: '+l.title)};
+   list.append(b);
+  }
+  group.append(list);root.append(group);
+ }
+}
+
+// 2.9.0 – Olvasó jellegű, szabályalapú tananyagminőség-elemzés.
+// A javasolt határértékek szerkesztői támpontok, nem tantervi előírások.
+let qualityReport=null;
+function computeQualityReport(){
+ const lessons=[];let questionTotal=0,missingExplanation=0,missingHelp=0;
+ for(const subject of project.subjects)for(const lessonData of subject.lessons){
+  const questions=splitContent(lessonData.content).filter(isQuestion);
+  const types=new Map(),suggestions=[];
+  let explanationMissing=0,helpMissing=0;
+  for(const block of questions){
+   const type=getField(block,'Típus:')||'ismeretlen';types.set(type,(types.get(type)||0)+1);
+   if(!getField(block,'Magyarázat:').trim())explanationMissing++;
+   if(type==='fill'&&!getField(block,'Segítség:').trim())helpMissing++;
+  }
+  const count=questions.length;questionTotal+=count;missingExplanation+=explanationMissing;missingHelp+=helpMissing;
+  if(count===0)suggestions.push('A lecke nem tartalmaz feladatot. Érdemes legalább néhány gyakorlókérdést hozzáadni.');
+  else if(count<5)suggestions.push('Kevés a feladat ('+count+'). Fontold meg további, fokozatosan nehezedő gyakorlók hozzáadását.');
+  if(count>=5&&types.size===1)suggestions.push('Minden feladat azonos típusú. Ha a tananyag engedi, próbálj más feladattípust is használni.');
+  if(explanationMissing)suggestions.push(explanationMissing+' kérdésnél hiányzik a „Misa tanít” magyarázat.');
+  if(helpMissing)suggestions.push(helpMissing+' beírásos feladatnál hiányzik a „Misa tippjei” segítség (opcionális).');
+  const dominant=count?Math.max(...types.values())/count:0;
+  if(count>=8&&types.size>1&&dominant>=0.85)suggestions.push('A feladatok legalább 85%-a egyetlen típusba tartozik; érdemes megvizsgálni a változatosságot.');
+  lessons.push({subject,lesson:lessonData,count,types:[...types],explanationMissing,helpMissing,suggestions});
+ }
+ return {lessons,questionTotal,missingExplanation,missingHelp};
+}
+function showQualityReport(){
+ if(!qualityReport)return;
+ const {lessons,questionTotal,missingExplanation,missingHelp}=qualityReport;
+ const select=$('qualitySubject').value,chosenLesson=$('qualityLesson').value,filter=$('qualityFilter').value;
+ const shown=lessons.filter(x=>(select==='all'||x.subject.id===select)&&(chosenLesson==='all'||x.lesson.id===chosenLesson)&&(filter!=='needs'||x.suggestions.length));
+ const needing=lessons.filter(x=>x.suggestions.length).length;
+ $('qualitySummary').textContent=lessons.length+' lecke · '+questionTotal+' kérdés · '+needing+' fejlesztési javaslattal érintett lecke · '+missingExplanation+' hiányzó magyarázat · '+missingHelp+' opcionális segítség nélkül.';
+ const root=$('qualityResults');root.replaceChildren();
+ if(!shown.length){root.append(el('p','Nincs a szűrésnek megfelelő lecke.','muted'));return;}
+ for(const item of shown){
+  const card=el('article',undefined,'quality-card');
+  card.append(el('h3',item.subject.name+' / '+item.lesson.title));
+  card.append(el('div',item.count+' kérdés · '+item.types.length+' feladattípus','quality-metrics'));
+  if(item.types.length)card.append(el('p','Típusok: '+item.types.map(([type,n])=>type+' ('+n+')').join(', '),'quality-metrics'));
+  if(item.suggestions.length){
+   const list=el('ul');for(const suggestion of item.suggestions)list.append(el('li',suggestion));card.append(el('p','Fejlesztési lehetőségek:','quality-warn'),list);
+  }else card.append(el('p','✓ Az alapvető mennyiségi és kitöltöttségi szempontok rendben.','quality-good'));
+  const open=el('button','Lecke megnyitása');open.type='button';open.onclick=()=>{sid=item.subject.id;lid=item.lesson.id;qidx=0;render();const panel=$('editor').closest('.panel');if(panel)panel.scrollTop=0;status('Minőségelemzésből megnyitva: '+item.lesson.title)};
+  card.append(open);root.append(card);
+ }
+}
+// 2.9.2: a tantárgyak és leckék már az elemzés indítása ELŐTT is láthatók.
+// Minden projektbetöltés és szerkesztő-újrarajzolás frissíti a listákat.
+function refreshQualitySelectors(){
+ const subjectSelect=$('qualitySubject'),lessonSelect=$('qualityLesson');
+ if(!subjectSelect||!lessonSelect)return;
+ const previousSubject=subjectSelect.value||'all',previousLesson=lessonSelect.value||'all';
+ subjectSelect.replaceChildren();
+ const all=el('option','Összes tantárgy');all.value='all';subjectSelect.append(all);
+ for(const subject of project.subjects){const option=el('option',subject.name);option.value=subject.id;subjectSelect.append(option)}
+ subjectSelect.value=project.subjects.some(s=>s.id===previousSubject)?previousSubject:'all';
+ lessonSelect.replaceChildren();
+ const allLessons=el('option','Összes lecke');allLessons.value='all';lessonSelect.append(allLessons);
+ for(const subject of project.subjects){
+  if(subjectSelect.value!=='all'&&subject.id!==subjectSelect.value)continue;
+  for(const lesson of subject.lessons){
+   const option=el('option',subjectSelect.value==='all'?subject.name+' / '+lesson.title:lesson.title);
+   option.value=lesson.id;lessonSelect.append(option);
+  }
+ }
+ lessonSelect.value=[...lessonSelect.options].some(o=>o.value===previousLesson)?previousLesson:'all';
+}
+$('qualityRun').onclick=()=>{
+ refreshQualitySelectors();
+ try{qualityReport=computeQualityReport();showQualityReport()}
+ catch(err){$('qualitySummary').textContent='Elemzési hiba: '+(err?.message||String(err));console.error(err)}
+};
+$('qualitySubject').onchange=()=>{refreshQualitySelectors();showQualityReport()};
+$('qualityLesson').onchange=showQualityReport;
+$('qualityFilter').onchange=showQualityReport;
+// 2.9.3: inicializálás csak az összes szűrő és eseménykezelő regisztrálása után.
+// A 2.9.2-ben az első scriptből túl korán hívott render() megszakította a teljes inicializálást.
+render();initializePermanent().then(()=>{
+  status('Tanári belépés után a központi tananyagot a Felhőből betöltés gombbal nyithatod meg.');
+});
+
+$('overviewRefresh').onclick=refreshOverview;
+$('overviewPanel').addEventListener('toggle',()=>{if($('overviewPanel').open)refreshOverview()});
+$('auditRun').onclick=()=>{
+ auditLast=auditProject();
+ const categories=$('auditCategory'),priorCategory=categories.value;categories.replaceChildren();
+ const allCategory=el('option','Minden kategória');allCategory.value='all';categories.append(allCategory);
+ const categoryNames=[...new Set(auditLast.findings.map(f=>f.category))].sort((a,b)=>a.localeCompare(b,'hu'));
+ for(const name of categoryNames){const o=el('option',name);o.value=name;categories.append(o)}
+ categories.value=categoryNames.includes(priorCategory)?priorCategory:'all';
+ const subjectSelect=$('auditSubject'),previous=subjectSelect.value;
+ subjectSelect.replaceChildren();
+ const all=el('option','Összes tantárgy');all.value='all';subjectSelect.append(all);
+ for(const s of project.subjects){const option=el('option',s.name);option.value=s.id;subjectSelect.append(option)}
+ subjectSelect.value=[...subjectSelect.options].some(o=>o.value===previous)?previous:'all';
+ showAuditResults();
+};
+$('auditSeverity').onchange=showAuditResults;
+$('auditCategory').onchange=showAuditResults;
+$('auditSubject').onchange=showAuditResults;
+$('validate').onclick=()=>{studioMessage('Projekt ellenőrzése folyamatban…');try{if(studioBaseBanks&&project.sourceFingerprint===studioBaseHash){const r=makeExport(studioBaseBanks,project);studioMessage('Az exportellenőrzés sikeres. Új kérdések: '+r.added+', törölt kérdések: '+r.removed+'.');}else{const n=checkProject();studioMessage('A projekt ellenőrzése sikeres. Kérdések: '+n+'. HTML-exporthoz az eredeti forrásfájl is szükséges.')}}catch(e){studioMessage('Ellenőrzési hiba: '+e.message,true)}};
+
+async function selectHTML(file,importProject){const html=await file.text(),{banks}=locateBanks(html),hash=await hashBanks(banks);if(importProject){if(dirty&&!confirm('A nem mentett módosítások elvesznek. Folytatod?'))return;discardAutosave();autosaveBlocked=false;project=readProjectFromBanks(banks,hash);sid=project.subjects.find(s=>s.lessons.length)?.id??null;lid=project.subjects.find(s=>s.id===sid)?.lessons[0]?.id??null;qidx=0;dirty=true;resetHistory();render();scheduleAutosave()}studioBaseHTML=html;studioBaseBanks=banks;studioBaseHash=hash;schedulePermanent();status((importProject?'HTML beolvasva; projekt JSON-mentése javasolt.':'Forrás HTML kiválasztva.')+' '+banks.length+' kérdésbank.');}
+
+$('htmlImport').onclick=()=>$('htmlFile').click();$('htmlBase').onclick=()=>$('baseFile').click();
+
+$('htmlFile').onchange=async e=>{const f=e.target.files[0];if(f)try{await selectHTML(f,true)}catch(err){alert('HTML import hiba: '+err.message)}e.target.value=''};
+
+$('baseFile').onchange=async e=>{const f=e.target.files[0];if(f)try{await selectHTML(f,false)}catch(err){alert('Forrás HTML hiba: '+err.message)}e.target.value=''};
+
+$('htmlExport').onclick=async()=>{studioMessage('HTML export előkészítése…');try{const pictureCount=project.subjects.reduce((n,s)=>n+s.lessons.reduce((m,l)=>m+splitContent(l.content).filter(b=>getField(b,'Kép adat:').startsWith('data:image/')).length,0),0);if(pictureCount)studioMessage('A projekt '+pictureCount+' képet tartalmaz. Ezeket a HTML-exportba is beágyazzuk.');if(!studioBaseHTML)throw Error('Először válaszd ki az eredeti forrás HTML-t.');if(!project.sourceFingerprint)throw Error('A projektnek nincs forrásazonosítója. Importáld a megfelelő HTML-t.');if(project.sourceFingerprint!==studioBaseHash)throw Error('A projekt és a forrás HTML kérdésbankja nem egyezik. Export megszakítva.');const {result,removed,added,untouched}=makeExport(studioBaseBanks,project);const old=locateBanks(studioBaseHTML),json=JSON.stringify(result).replace(/</g,'\\u003c');const banksOnly=studioBaseHTML.slice(0,old.start)+json+studioBaseHTML.slice(old.end);const orderedHTML=updateSubjectMenuOrder(updateTopicOrder(banksOnly,studioBaseBanks,result,project),project);const answerPictureCount=project.subjects.reduce((n,s)=>n+s.lessons.reduce((m,l)=>m+splitContent(l.content).filter(isQuestion).reduce((k,b)=>{try{return k+Object.keys(JSON.parse(getField(b,'Válaszképek JSON:')||'{}')).length}catch{return k}},0),0),0);const withOrderSupport=addLegacySentenceSupport(addMultipleOrderSupport(orderedHTML));const withQuestionImages=pictureCount?addQuestionImageSupport(withOrderSupport):withOrderSupport;const output=answerPictureCount?addAnswerImageSupport(withQuestionImages):withQuestionImages;const verify=locateBanks(output);if(stableJSON(verify.banks)!==stableJSON(result))throw Error('Az export kérdésbank-ellenőrzése sikertelen');const expectedOrdered=updateSubjectMenuOrder(updateTopicOrder(studioBaseHTML,studioBaseBanks,result,project),project);const expectedOrderSupport=addLegacySentenceSupport(addMultipleOrderSupport(expectedOrdered));const expectedQuestionImages=pictureCount?addQuestionImageSupport(expectedOrderSupport):expectedOrderSupport;const expected=answerPictureCount?addAnswerImageSupport(expectedQuestionImages):expectedQuestionImages;if(output.slice(0,verify.start)!==expected.slice(0,locateBanks(expected).start)||output.slice(verify.end)!==expected.slice(locateBanks(expected).end))throw Error('Az export HTML-ellenőrzése sikertelen');const ok=await studioConfirm(`Exportálás ellenőrizve.\nÚj kérdések: ${added}\nTörölt kérdések: ${removed}\nMegőrzött nem támogatott feladatok: ${untouched}\n\nKészítsük el a külön HTML-fájlt?`);if(!ok){studioMessage('Exportálás megszakítva.');return;}downloadFile('misa-studio-export-TESZT.html',output,'text/html;charset=utf-8');studioMessage('HTML export elindítva. Az eredeti forrásfájl változatlan. JSON biztonsági mentés is javasolt.')}catch(e){studioMessage('HTML export megszakadt: '+e.message,true)}};
+
+</script>
+
+
+<!-- 10.2: nincs HTML-be ágyazott tananyag -->
+<script src="misa101-cloud.js"></script><script src="misa105-publish.js"></script></body></html>
