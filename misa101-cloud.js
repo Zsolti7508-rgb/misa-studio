@@ -225,5 +225,17 @@ async function logout(){
 logoutButton.onclick=logout;
 $('m10signout').onclick=logout;
 $('m10upload').onclick=upload;$('m10download').onclick=()=>download({automatic:false});
-(async()=>{try{const base='https://www.gstatic.com/firebasejs/10.14.1/';const [app,authlib,fire]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);au=authlib;fs=fire;const fb=app.initializeApp(config,'misa10-studio');auth=au.getAuth(fb);db=fs.getFirestore(fb);au.onAuthStateChanged(auth,update);}catch(e){gateMessage('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');msg('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');}})();
+(async()=>{try{const base='https://www.gstatic.com/firebasejs/10.14.1/';const [app,authlib,fire]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);au=authlib;fs=fire;const fb=app.initializeApp(config,'misa10-studio');auth=au.getAuth(fb);// Safari privát mód: WebChannel streaming helyett HTTP long polling.
+// A Firestore-t az első lekérés előtt kell konfigurálni.
+try {
+  db=fs.initializeFirestore(fb,{
+    experimentalForceLongPolling:true,
+    experimentalAutoDetectLongPolling:false,
+    useFetchStreams:false
+  });
+} catch(initError) {
+  // Ha másik modul már inicializálta a Firestore-t, ne rejtsük el a hibát.
+  throw new Error('Firestore inicializálási ütközés: '+initError.message);
+}
+au.onAuthStateChanged(auth,update);}catch(e){gateMessage('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');msg('Firebase betöltési hiba: '+e.message+' (internetkapcsolat szükséges)');}})();
 })();
