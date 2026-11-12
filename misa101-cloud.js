@@ -12,6 +12,7 @@ logoutButton.setAttribute('aria-label','Kijelentkezés a Misa Studióból');
 logoutButton.style.cssText='position:fixed;right:18px;top:14px;z-index:2147483000;background:#a83232;color:white;border:1px solid #f2aaaa;border-radius:9px;padding:10px 15px;font:600 14px system-ui;cursor:pointer;box-shadow:0 3px 12px #0007;display:none';
 // A két felső navigációs gomb egységes megjelenéssel, közös sorban.
 const studioNav=document.createElement('div');
+studioNav.dataset.version='20261112-2';
 studioNav.id='misa101-studio-nav';
 studioNav.style.cssText='position:fixed;right:18px;top:14px;z-index:2147483000;display:flex;gap:8px;align-items:center;max-width:calc(100vw - 36px)';
 logoutButton.style.cssText='background:#a83232;color:white;border:1px solid #f2aaaa;border-radius:9px;padding:10px 15px;font:600 14px system-ui;cursor:pointer;box-shadow:0 3px 12px #0007;display:none;white-space:nowrap';
@@ -20,7 +21,7 @@ gameButton.id='misa101-game';
 gameButton.type='button';
 gameButton.textContent='🎮 Játék';
 gameButton.setAttribute('aria-label','Gyakoroljunk Misával! játék megnyitása');
-gameButton.style.cssText=logoutButton.style.cssText;
+gameButton.style.cssText=logoutButton.style.cssText.replace('display:none','display:block');
 gameButton.onclick=()=>{window.open('https://zsolti7508-rgb.github.io/jatek/index.html','_blank','noopener,noreferrer');};
 studioNav.append(gameButton,logoutButton);
 document.body.appendChild(studioNav);
@@ -226,6 +227,7 @@ async function logout(){
   logoutButton.disabled=true;
   document.documentElement.classList.remove('misa-teacher-ok');
   logoutButton.style.display='none';
+  gameButton.style.display='none';
   me=null;revision=null;cloudReady=false;cancelSync();
   $('m10actions').hidden=true;
   $('m10login').hidden=false;
