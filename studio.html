@@ -91,6 +91,14 @@
 .collapsible-analysis-body{padding:12px 14px 14px}
 .collapsible-analysis-body .headrow{margin-bottom:6px}
  .studio-author-credit{padding:18px 12px 26px;text-align:center;font-size:14px;font-weight:650;color:#b8c9d8;letter-spacing:.2px}
+
+/* 2.9.11 – feladatkészítő varázsló */
+.wizard-overlay{position:fixed;inset:0;z-index:9998;background:#07111de8;display:flex;align-items:center;justify-content:center;padding:14px}
+.wizard-window{background:#172737;border:1px solid #6aa99a;border-radius:14px;padding:22px;width:min(750px,100%);max-height:95vh;overflow:auto;box-shadow:0 20px 70px #000a}
+.wizard-window h2{margin:0 0 8px}.wizard-window .wizard-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:9px 0}
+.wizard-window .wizard-row input{flex:1;min-width:140px}.wizard-window .wizard-row button{flex:0 0 auto}
+.wizard-window .wizard-preview{background:#20394b;padding:14px;border-radius:9px;margin:14px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.wizard-window .wizard-error{color:#ffd28b;min-height:1.5em}
 </style><style id="qualityStyles">.quality-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px;margin-top:12px}.quality-card{background:#1c3041;border:1px solid #45677a;border-radius:10px;padding:12px;min-width:0}.quality-card h3{font-size:14px;margin:0 0 5px}.quality-card p{margin:6px 0;font-size:13px}.quality-card ul{margin:8px 0;padding-left:20px;font-size:13px;line-height:1.55}.quality-good{color:#a8e2b4}.quality-warn{color:#ffd28b}.quality-card button{margin-top:8px}.quality-metrics{color:#b9cad7;font-size:12px}</style><style id="misa101-gate-style">html:not(.misa-teacher-ok) body > :not(#misa101-gate):not(script){display:none!important}#misa101-gate{position:fixed;inset:0;z-index:2147483640;background:#101923;color:#e9f1f6;display:flex;align-items:center;justify-content:center;padding:20px;font:16px system-ui}html.misa-teacher-ok #misa101-gate{display:none!important}.misa101-panel{width:min(440px,100%);background:#172737;border:1px solid #55788d;border-radius:16px;padding:26px;box-shadow:0 20px 60px #0008}.misa101-panel h1{font-size:24px}.misa101-panel input{display:block;margin:12px 0;width:100%}.misa101-panel button{width:100%;margin-top:8px}.misa101-panel p{line-height:1.5;color:#c4d4e0}#misa101-status{white-space:pre-wrap}</style><style id="studio-advanced-style">.studio-advanced-tools{min-width:200px;align-self:center}.studio-advanced-tools>summary{cursor:pointer;border:1px solid #53677a;background:#29445a;color:white;border-radius:8px;padding:9px 12px;font-size:14px}.studio-advanced-tools>summary:hover{background:#37627e}.studio-advanced-tools>summary:focus-visible{outline:2px solid #9be3cf;outline-offset:3px}.studio-advanced-actions{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.studio-advanced-actions button{padding:7px 10px}.studio-advanced-tools .muted{max-width:560px;line-height:1.4;margin:5px 0}@media(max-width:800px){.studio-advanced-tools{width:100%}}</style></head><body><div id="misa101-gate"><div class="misa101-panel"><h1>🔒 Misa Studio – Tanári belépés</h1><p>Csak tanári jogosultsággal használható a szerkesztő.</p><input id="misa101-email" type="email" autocomplete="username" placeholder="Tanári e-mail"><input id="misa101-password" type="password" autocomplete="current-password" placeholder="Jelszó"><button id="misa101-login">Belépés</button><p id="misa101-status" role="status">Kapcsolódás a Firebase-hez…</p></div></div>
 <header><div><h1>🐈‍⬛ Misa Studio 2.9.10 <small>Vizuális feladatszerkesztő</small></h1><small>Windows és macOS • Studio 0.9.13 JSON-projekt kompatibilitás</small></div><div class="tools"><button disabled="" id="undo" title="Visszavonás (⌘Z / Ctrl+Z)">↶ Visszavonás</button><button disabled="" id="redo" title="Újra (⌘⇧Z / Ctrl+Y)">↷ Újra</button><button id="new">Új projekt</button><button id="validate">Projekt ellenőrzése</button><button class="primary" id="htmlExport">HTML export</button></div><details class="studio-advanced-tools" id="studioAdvancedTools"><summary>⚙️ Haladó eszközök</summary><div class="tools studio-advanced-actions"><button id="open" type="button">JSON megnyitása</button><button class="primary" id="save" type="button">JSON mentése</button><button id="htmlImport" type="button">HTML import</button><button id="htmlBase" type="button">Forrás HTML kiválasztása</button></div><p class="muted">Fájlműveletek és független biztonsági mentés. A felhőmentés ettől függetlenül működik.</p></details></header><div id="autosaveStatus" role="status" style="padding:5px 22px;color:#a8d9c7;background:#172737;font-size:12px">Automatikus mentés: ellenőrzés…</div><div aria-live="polite" id="studioNotice" role="status" style="display:none;margin:10px 20px;padding:14px;border:1px solid #5c91a9;border-radius:9px;background:#193449;color:#fff;white-space:pre-wrap"></div>
 <section aria-label="Tananyagkereső" class="search-panel"><label for="globalSearch">🔎 Keresés az összes tantárgyban, leckében és kérdésben</label><input autocomplete="off" id="globalSearch" placeholder="Írj be egy szót, kérdést vagy választ…" type="search"/><div class="search-count" id="searchCount">Írj be legalább 2 karaktert.</div><div class="search-results" id="searchResults"></div></section><main><section class="panel"><div class="headrow"><h2>Tantárgyak</h2><button id="addSubject">+ Tantárgy</button></div><div id="subjects"></div></section><section class="panel"><div class="headrow"><h2>Leckék</h2><button id="addLesson">+ Lecke</button></div><div id="lessons"></div></section><section class="panel"><h2>Szerkesztő</h2><div id="editor"><p class="muted">Válassz egy leckét a szerkesztéshez.</p></div></section></main><details class="overview-panel" id="overviewPanel"><summary>📊 Tananyag-áttekintő – tantárgyak, leckék, kérdések</summary><p class="muted">A kimutatás csak olvassa a projektet. A részletes hibákhoz használd a Tananyag ellenőrzése gombot.</p><div class="tools"><button class="primary" id="overviewRefresh" type="button">↻ Áttekintő frissítése</button></div><div id="overviewContent"></div></details><details class="search-panel collapsible-analysis"><summary>🩺 Intelligens tananyagellenőrző</summary><div class="collapsible-analysis-body"><div class="headrow"><div><div class="muted">Hibák és lehetséges ismétlődések. A tananyagot nem módosítja.</div></div><button class="primary" id="auditRun">Tananyag ellenőrzése</button></div><div class="search-count" id="auditSummary">Az ellenőrzés még nem futott le.</div><div class="tools" style="margin:10px 0"><select aria-label="Ellenőrzési eredmény típusa" id="auditSeverity" style="width:auto;max-width:100%"><option value="all">Összes találat</option><option value="hiba">Csak hibák</option><option value="figyelmeztetés">Csak figyelmeztetések</option></select><select aria-label="Hiba kategóriája" id="auditCategory" style="width:auto;max-width:100%"><option value="all">Minden kategória</option></select><select aria-label="Ellenőrzési tantárgy" id="auditSubject" style="width:auto;max-width:100%"><option value="all">Összes tantárgy</option></select></div><div class="search-count" id="auditVisible"></div><div class="search-results" id="auditResults" style="max-height:350px"></div></div></details><details class="search-panel collapsible-analysis"><summary>📚 Tananyagminőség és fejlesztési javaslatok</summary><div class="collapsible-analysis-body"><div class="headrow"><div><div class="muted">Leckék feladatszáma, feladattípusok változatossága, magyarázatok és segítségek. Tájékoztató jellegű, nem módosítja a projektet.</div></div><button class="primary" id="qualityRun" type="button">Minőség elemzése</button></div><div class="search-count" id="qualitySummary">Az elemzés még nem futott le.</div><div class="tools"><select aria-label="Tantárgy szerinti szűrés" id="qualitySubject" style="width:auto;max-width:100%"><option value="all">Összes tantárgy</option></select><select aria-label="Lecke szerinti szűrés" id="qualityLesson" style="width:auto;max-width:100%"><option value="all">Összes lecke</option></select><select aria-label="Fejlesztési javaslatok szűrése" id="qualityFilter" style="width:auto;max-width:100%"><option value="all">Minden lecke</option><option value="needs">Csak fejlesztendők</option></select></div><div class="quality-results" id="qualityResults"></div></div></details><footer id="status">Új, üres tesztprojekt. Az eredeti fájlok nem módosulnak.</footer>
@@ -227,6 +235,73 @@ function getField(block,key){const line=block.split('\n').find(s=>s.startsWith(k
 
 function setField(block,key,value){const lines=block.split('\n');const idx=lines.findIndex(s=>s.startsWith(key));if(idx>=0)lines[idx]=key+' '+value;else lines.push(key+' '+value);return lines.join('\n')}
 
+
+// 2.9.11: a varázsló kizárólag a Mentés gombbal változtatja meg a projektet.
+function openQuestionWizard(targetLesson){
+ if(!targetLesson||!subj()?.lessons.includes(targetLesson))return;
+ const overlay=el('div',undefined,'wizard-overlay');overlay.setAttribute('role','presentation');
+ const win=el('section',undefined,'wizard-window');win.setAttribute('role','dialog');win.setAttribute('aria-modal','true');win.setAttribute('aria-label','Feladatkészítő varázsló');
+ const heading=el('h2','✨ Új feladat készítése');const help=el('p','Válassz típust, töltsd ki a mezőket, majd ellenőrizd az előnézetet. A feladat csak a Mentés gombbal kerül a leckébe.','muted');
+ const type=el('select');type.setAttribute('aria-label','Feladattípus');
+ [['choice','Feleletválasztós'],['fill','Hiányzó szó beírása'],['match','Párosítás'],['order','Sorrendbe rendezés'],['abc','Ábécérend']].forEach(([v,t])=>{const o=el('option',t);o.value=v;type.append(o)});
+ const question=el('textarea');question.rows=2;question.placeholder='Írd be a kérdést';
+ const page=el('input');page.placeholder='Tankönyvi oldal (nem kötelező)';
+ const explanation=el('textarea');explanation.rows=2;explanation.placeholder='Misa tanít – magyarázat (nem kötelező)';
+ const hint=el('textarea');hint.rows=2;hint.placeholder='Misa tippjei – segítség (nem kötelező)';
+ const data=el('div');const preview=el('div',undefined,'wizard-preview');const error=el('p',undefined,'wizard-error');error.setAttribute('role','alert');
+ const cancel=el('button','Mégse');const save=el('button','✓ Feladat mentése','primary');
+ const fields=[];let correctIndex=0;
+ const close=()=>{document.removeEventListener('keydown',onKey);overlay.remove()};
+ const onKey=e=>{if(e.key==='Escape'){e.preventDefault();close()}};
+ document.addEventListener('keydown',onKey);cancel.onclick=close;
+ const labelField=(name,input)=>{const l=el('label',name);win.append(l,input)};
+ win.append(heading,help);labelField('Feladattípus',type);labelField('Kérdés',question);labelField('Tankönyvi oldal',page);
+ win.append(data);labelField('Magyarázat',explanation);labelField('Segítség',hint);win.append(el('h3','Előnézet'),preview,error);
+ const actions=el('div',undefined,'tools');actions.append(cancel,save);win.append(actions);overlay.append(win);document.body.append(overlay);
+ const addField=(a='',b='')=>{
+  const row=el('div',undefined,'wizard-row');const i=el('input');i.value=a;i.placeholder=type.value==='match'?'Bal oldali elem':type.value==='choice'?'Válasz':'Rendezendő elem';row.append(i);
+  const entry={row,i};if(type.value==='match'){const j=el('input');j.value=b;j.placeholder='Jobb oldali pár';row.append(j);entry.j=j}
+  if(type.value==='choice'){const r=el('input');r.type='radio';r.name='wizard-correct';r.style.width='auto';r.checked=fields.length===correctIndex;r.title='Helyes válasz';r.setAttribute('aria-label','Helyes válasz kijelölése');r.onchange=()=>{correctIndex=fields.indexOf(entry);refresh()};row.prepend(r);entry.r=r}
+  const del=el('button','Törlés');del.type='button';del.onclick=()=>{const idx=fields.indexOf(entry);fields.splice(idx,1);row.remove();if(idx<correctIndex)correctIndex--;else if(idx===correctIndex)correctIndex=0;fields.forEach((f,n)=>{if(f.r)f.r.checked=n===correctIndex});refresh()};row.append(del);
+  i.oninput=refresh;if(entry.j)entry.j.oninput=refresh;fields.push(entry);data.append(row);refresh();
+ };
+ const values=()=>fields.map(f=>f.i.value.trim());
+ function refresh(){
+  const t=type.value,q=question.value.trim();let lines=[q||'(Még nincs kérdés)'];
+  if(t==='choice')fields.forEach((f,i)=>lines.push((i===correctIndex?'✓ ':'○ ')+(f.i.value.trim()||'(üres válasz)')));
+  else if(t==='fill')lines.push('Helyes válasz: '+(fields[0]?.i.value.trim()||'…'));
+  else if(t==='match')fields.forEach(f=>lines.push((f.i.value.trim()||'…')+' ↔ '+(f.j?.value.trim()||'…')));
+  else fields.forEach((f,i)=>lines.push((i+1)+'. '+(f.i.value.trim()||'…')));
+  preview.textContent=lines.join('\n');
+ }
+ function rebuild(){fields.length=0;data.replaceChildren();correctIndex=0;const t=type.value;
+  const note=el('p',t==='choice'?'Jelöld ki a helyes választ.':t==='match'?'Add meg az összetartozó párokat.':'order'===t||'abc'===t?'A sorok sorrendje legyen a helyes sorrend.':'Add meg a helyes szót vagy kifejezést.','muted');data.append(note);
+  if(t==='fill')addField('');else if(t==='match'){addField('','');addField('','')}else {addField('');addField('');if(t==='choice')addField('')}
+  if(t!=='fill'){const more=el('button',t==='match'?'+ Pár hozzáadása':'+ Elem hozzáadása');more.type='button';more.onclick=()=>addField();data.append(more)}
+  refresh();
+ }
+ type.onchange=rebuild;question.oninput=refresh;rebuild();question.focus();
+ save.onclick=()=>{
+  error.textContent='';const t=type.value,q=question.value.trim(),v=values();
+  if(!q){error.textContent='Írd be a kérdést.';return}
+  if(v.some(x=>!x)){error.textContent='Minden választ vagy rendezendő elemet tölts ki.';return}
+  if(t==='choice'&&(v.length<2||new Set(v.map(x=>x.toLocaleLowerCase('hu'))).size!==v.length)){error.textContent='Legalább két különböző válasz szükséges.';return}
+  if(t==='fill'&&v.length!==1){error.textContent='Adj meg egy helyes választ.';return}
+  if((t==='match'||t==='order'||t==='abc')&&v.length<2){error.textContent='Legalább két elem szükséges.';return}
+  if(t==='match'&&fields.some(f=>!f.j.value.trim())){error.textContent='Minden pár mindkét oldalát töltsd ki.';return}
+  const safe=x=>String(x).replace(/\r?\n/g,' ').trim();
+  const block=['Azonosító: new-'+uuid(),'Típus: '+t,'Oldal: '+safe(page.value),'Kérdés: '+safe(q)];
+  if(t==='choice'){if(v.some(x=>x.includes('|'))){error.textContent='A válaszok nem tartalmazhatnak | karaktert.';return}block.push('Válaszok: '+v.join(' | '),'Helyes válasz: '+v[correctIndex])}
+  else if(t==='fill')block.push('Helyes válasz: '+safe(v[0]));
+  else if(t==='match')block.push('Párok JSON: '+JSON.stringify(fields.map(f=>[f.i.value.trim(),f.j.value.trim()])));
+  else block.push('Szavak JSON: '+JSON.stringify(v));
+  block.push('Magyarázat: '+safe(explanation.value),'Segítség: '+safe(hint.value));
+  if(!project.subjects.some(s=>s.lessons.includes(targetLesson))){error.textContent='A céllecke időközben megszűnt.';return}
+  const parts=splitContent(targetLesson.content);parts.push(block.join('\n'));targetLesson.content=joinContent(parts);qidx=parts.length-1;
+  mark();close();render();studioMessage('Az új feladat bekerült a leckébe. Az automatikus mentés aktív; külön JSON biztonsági mentés is javasolt.');
+ };
+}
+
 function render(){refreshQualitySelectors();const subjects=$('subjects'),lessons=$('lessons'),editor=$('editor');subjects.replaceChildren();lessons.replaceChildren();editor.replaceChildren();
 
 project.subjects.forEach(s=>{const b=el('button',s.name,'item'+(sid===s.id?' active':''));b.onclick=()=>{sid=s.id;lid=null;qidx=0;render()};subjects.append(b)});
@@ -268,7 +343,8 @@ if(lesson()){
  const typePicker=el('select');typePicker.setAttribute('aria-label','Új kérdés típusa');[['choice','Feleletválasztós'],['fill','Hiányzó szó beírása'],['match','Párosítás'],['order','Sorrendbe rendezés'],['abc','Ábécérend']].forEach(([v,t])=>{const o=el('option',t);o.value=v;typePicker.append(o)});
  const add=el('button','+ Kérdés hozzáadása','primary');add.onclick=()=>{const p=splitContent(current.content);const id='new-'+uuid(),type=typePicker.value;let block='Azonosító: '+id+'\nTípus: '+type+'\nOldal: \nKérdés: Új kérdés\nVálaszok: Első | Második\nHelyes válasz: Első\nMagyarázat: ';if(type==='fill')block='Azonosító: '+id+'\nTípus: fill\nOldal: \nKérdés: Egészítsd ki!\nHelyes válasz: szó\nMagyarázat: \nSegítség: ';if(type==='match')block='Azonosító: '+id+'\nTípus: match\nOldal: \nKérdés: Párosítsd!\nPárok JSON: [["alma","apple"],["kutya","dog"]]\nMagyarázat: ';if(type==='order'||type==='abc')block='Azonosító: '+id+'\nTípus: '+type+'\nOldal: \nKérdés: Tedd sorrendbe!\nSzavak JSON: ["alma","barack","citrom"]\nMagyarázat: ';p.push(block);current.content=joinContent(p);qidx=p.length-1;mark();render()};
 
- qtools.append(typePicker,add);editor.append(qtools);
+ const wizardButton=el('button','✨ Feladatkészítő varázsló','primary');wizardButton.type='button';wizardButton.onclick=()=>openQuestionWizard(current);
+ qtools.append(typePicker,add,wizardButton);editor.append(qtools);
 
  if(questionIndices.length){
 
