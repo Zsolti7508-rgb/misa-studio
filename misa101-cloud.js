@@ -10,7 +10,20 @@ logoutButton.type='button';
 logoutButton.textContent='↪ Kijelentkezés';
 logoutButton.setAttribute('aria-label','Kijelentkezés a Misa Studióból');
 logoutButton.style.cssText='position:fixed;right:18px;top:14px;z-index:2147483000;background:#a83232;color:white;border:1px solid #f2aaaa;border-radius:9px;padding:10px 15px;font:600 14px system-ui;cursor:pointer;box-shadow:0 3px 12px #0007;display:none';
-document.body.appendChild(logoutButton);
+// A két felső navigációs gomb egységes megjelenéssel, közös sorban.
+const studioNav=document.createElement('div');
+studioNav.id='misa101-studio-nav';
+studioNav.style.cssText='position:fixed;right:18px;top:14px;z-index:2147483000;display:flex;gap:8px;align-items:center;max-width:calc(100vw - 36px)';
+logoutButton.style.cssText='background:#a83232;color:white;border:1px solid #f2aaaa;border-radius:9px;padding:10px 15px;font:600 14px system-ui;cursor:pointer;box-shadow:0 3px 12px #0007;display:none;white-space:nowrap';
+const gameButton=document.createElement('button');
+gameButton.id='misa101-game';
+gameButton.type='button';
+gameButton.textContent='🎮 Játék';
+gameButton.setAttribute('aria-label','Gyakoroljunk Misával! játék megnyitása');
+gameButton.style.cssText=logoutButton.style.cssText;
+gameButton.onclick=()=>{window.open('https://zsolti7508-rgb.github.io/jatek/index.html','_blank','noopener,noreferrer');};
+studioNav.append(gameButton,logoutButton);
+document.body.appendChild(studioNav);
 const gateStatus=document.getElementById('misa101-status');const gateMessage=s=>{gateStatus.textContent=s;};
 const gateLogin=document.getElementById('misa101-login');gateLogin.onclick=async()=>{if(!auth||!au){gateMessage('A Firebase még nem érhető el.');return;}try{gateMessage('Bejelentkezés…');await au.signInWithEmailAndPassword(auth,document.getElementById('misa101-email').value.trim(),document.getElementById('misa101-password').value);document.getElementById('misa101-password').value='';}catch(e){gateMessage('Sikertelen bejelentkezés: '+e.code);}};
 const $=id=>document.getElementById(id);const msg=s=>$('m10status').textContent=s;
@@ -85,7 +98,7 @@ const manifest=()=>fs.doc(db,'tananyag','aktualis');
 function chunks(s,n=95000){const a=[];for(let i=0;i<s.length;i+=n)a.push(s.slice(i,i+n));return a;}
 function valid(p){return p&&Number.isInteger(p.grade)&&Array.isArray(p.subjects)&&p.subjects.every(s=>typeof s.id==='string'&&Array.isArray(s.lessons));}
 async function permitted(user){if(!user)return false;const d=await deadlineRead(fs.getDoc(fs.doc(db,'tanarok',user.uid)),Date.now()+15000);return d.exists()&&['admin','tanar'].includes(d.data().szerepkor);}
-async function update(user){downloadEpoch++;logoutButton.style.display='none';document.documentElement.classList.remove('misa-teacher-ok');gateMessage(user?'Tanári jogosultság ellenőrzése…':'Jelentkezz be tanári fiókkal.');me=null;revision=null;cloudReady=false;cancelSync();$('m10actions').hidden=true;$('m10login').hidden=false;if(!user){msg('Jelentkezz be tanári fiókkal.');return;}try{if(!await permitted(user)){gateMessage('Ehhez a fiókhoz nincs tanári jogosultság.');msg('A fiók nincs a tanarok gyűjteményben, vagy nincs megfelelő szerepköre.');return;}document.documentElement.classList.add('misa-teacher-ok');logoutButton.style.display='block';gateMessage('Sikeres belépés.');me=user;$('m10actions').hidden=false;$('m10login').hidden=true;const m=await deadlineRead(fs.getDoc(manifest()),Date.now()+15000);revision=m.exists()?m.data().revision:0;cloudReady=false;msg('Bejelentkezve: '+user.email+' · felhőverzió: '+revision+(m.exists()?' · Automatikus tananyagbetöltés indul…':' · A felhő még üres: a régi, privát Studio-verzióból egyszer fel kell tölteni a tananyagot.'));if(m.exists())await download({automatic:true});}catch(e){gateMessage('Jogosultságellenőrzési hiba: '+e.message);msg('Hozzáférési hiba: '+e.message);}}
+async function update(user){downloadEpoch++;logoutButton.style.display='none';gameButton.style.display='none';document.documentElement.classList.remove('misa-teacher-ok');gateMessage(user?'Tanári jogosultság ellenőrzése…':'Jelentkezz be tanári fiókkal.');me=null;revision=null;cloudReady=false;cancelSync();$('m10actions').hidden=true;$('m10login').hidden=false;if(!user){msg('Jelentkezz be tanári fiókkal.');return;}try{if(!await permitted(user)){gateMessage('Ehhez a fiókhoz nincs tanári jogosultság.');msg('A fiók nincs a tanarok gyűjteményben, vagy nincs megfelelő szerepköre.');return;}document.documentElement.classList.add('misa-teacher-ok');logoutButton.style.display='block';gameButton.style.display='block';gateMessage('Sikeres belépés.');me=user;$('m10actions').hidden=false;$('m10login').hidden=true;const m=await deadlineRead(fs.getDoc(manifest()),Date.now()+15000);revision=m.exists()?m.data().revision:0;cloudReady=false;msg('Bejelentkezve: '+user.email+' · felhőverzió: '+revision+(m.exists()?' · Automatikus tananyagbetöltés indul…':' · A felhő még üres: a régi, privát Studio-verzióból egyszer fel kell tölteni a tananyagot.'));if(m.exists())await download({automatic:true});}catch(e){gateMessage('Jogosultságellenőrzési hiba: '+e.message);msg('Hozzáférési hiba: '+e.message);}}
  // One overall deadline, rather than 15 seconds for every individual Firestore document.
  function deadlineRead(promise,deadline){
   const remaining=deadline-Date.now();
